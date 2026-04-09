@@ -48,6 +48,20 @@
         ]
       },
       {
+        "tab": "Brain",
+        "groups": [
+          {
+            "group": "Brain",
+            "pages": [
+              "brain/overview",
+              "brain/quickstart",
+              "brain/search",
+              "brain/configuration"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API reference",
         "groups": [
           {

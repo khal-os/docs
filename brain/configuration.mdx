@@ -1,0 +1,228 @@
+---
+title: "Configuration"
+description: "brain.json reference, environment variables, and embedding model options"
+icon: "gear"
+---
+
+Brain is configured through a `brain.json` file at the root of each brain vault, plus environment variables for secrets and global settings.
+
+## brain.json
+
+Every brain vault has a `brain.json` configuration file. Created automatically by `brain init`, it controls identity, search strategy, and embedding settings.
+
+```json
+{
+  "id": "user:local:my-brain",
+  "slug": "my-brain",
+  "name": "My Brain",
+  "type": "engineering",
+  "owner": {
+    "type": "user",
+    "id": "local"
+  },
+  "homePath": ".",
+  "strategy": {
+    "default": "rag",
+    "segments": []
+  },
+  "embedModel": "gemini-embedding-2-preview",
+  "embedDims": 768
+}
+```
+
+### Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | `string` | Yes | Scoped brain ID in format `ownerType:ownerId:name` |
+| `slug` | `string` | Yes | URL-safe identifier, used for database naming |
+| `name` | `string` | Yes | Human-readable display name |
+| `type` | `string` | No | Brain type: `generic`, `engineering`, `pm`, `gtm`, `research`, `ops`, `personal`. Default: `generic` |
+| `owner` | `object` | Yes | Owner entity with `type` and `id` fields |
+| `homePath` | `string` | No | Relative path to vault root. Default: `"."` |
+| `strategy` | `object` | No | Search strategy configuration |
+| `embedModel` | `string` | No | Embedding model name. Default: `gemini-embedding-2-preview` |
+| `embedDims` | `number` | No | Embedding dimensions. Default: `768` |
+
+### Strategy Configuration
+
+The `strategy` field controls how Brain routes search queries:
+
+```json
+{
+  "strategy": {
+    "default": "rag",
+    "segments": [
+      {
+        "name": "code-lookup",
+        "strategy": "bm25",
+        "pattern": "function|class|import|export"
+      },
+      {
+        "name": "concepts",
+        "strategy": "vector",
+        "pattern": "why|how does|explain"
+      }
+    ]
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `default` | Strategy used when no segment matches: `rag`, `bm25`, or `vector` |
+| `segments` | Array of routing rules evaluated in order. First match wins |
+
+### Updating Configuration
+
+Use the CLI to update individual fields:
+
+```bash
+brain config set strategy.default vector --path ./my-brain
+brain config set type engineering --path ./my-brain
+```
+
+Or edit `brain.json` directly — it's a plain JSON file.
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GEMINI_API_KEY` | Yes | Google Gemini API key for embeddings |
+| `GOOGLE_API_KEY` | No | Alternative to `GEMINI_API_KEY` (either works) |
+| `BRAIN_PG_URL` | No | PostgreSQL connection URL. Default: auto-detected from local Postgres |
+| `BRAIN_PG_PORT` | No | PostgreSQL port override |
+| `GENIE_PG_AVAILABLE` | No | Set to `true` when running under Genie with managed Postgres |
+
+<Warning>
+  Never commit API keys to your repository. Use `.env` files or your system's secret manager.
+</Warning>
+
+## Embedding Models
+
+Brain uses Gemini's multimodal embedding model by default. The embedding model determines how content is vectorized for semantic search.
+
+| Model | Dimensions | Modalities | Notes |
+|-------|------------|------------|-------|
+| `gemini-embedding-2-preview` | 768 | Text, image, audio | Default. Best quality for mixed-modality vaults |
+
+<Note>
+  Changing the embedding model after indexing requires a full rebuild: `brain rebuild --path ./my-brain`. Existing embeddings are incompatible with different models.
+</Note>
+
+## Vault Structure
+
+Brain expects this directory structure inside a vault:
+
+```
+my-brain/
+├── brain.json           # Configuration (required)
+├── memory/              # Agent memory files
+├── domains/             # Domain knowledge documents
+├── decisions/           # Architecture decision records
+├── reflections/         # Self-assessment and retrospectives
+├── mounts.json          # External mount points (auto-generated)
+└── README.md            # Brain overview (optional)
+```
+
+All directories are optional — Brain creates them as needed. You can also add any custom directories; Brain indexes all `.md` files recursively.
+
+## Frontmatter Schema
+
+Brain recognizes YAML frontmatter in markdown files for metadata and scoring:
+
+### Standard Fields
+
+```yaml
+---
+title: "Document Title"
+type: domain | decision | reflection | note
+confidence: high | medium | low
+tags: [postgres, architecture]
+created: 2024-01-15
+updated: 2024-03-20
+---
+```
+
+### Domain Documents
+
+```yaml
+---
+title: "Payment Processing"
+type: domain
+confidence: high
+domain: payments
+boundary: "Stripe integration, invoice generation, refunds"
+---
+```
+
+### Decision Records
+
+```yaml
+---
+title: "Use PostgreSQL for Search"
+type: decision
+confidence: high
+status: accepted | proposed | deprecated
+decided: 2024-01-15
+consequences: "Requires pgvector extension, adds ops complexity"
+---
+```
+
+### Reflection Documents
+
+```yaml
+---
+title: "Q1 Architecture Review"
+type: reflection
+confidence: medium
+period: 2024-Q1
+scope: architecture
+---
+```
+
+<Tip>
+  Documents with `type: decision` and `confidence: high` receive the highest source weight in search results. Use this for authoritative content you want to surface first.
+</Tip>
+
+## Health Checks
+
+Brain includes a built-in health engine that monitors vault quality:
+
+```bash
+brain health --brain-id my-brain
+```
+
+```
+── Brain Health: my-brain ──────────────────────
+  Documents:     42 indexed, 0 stale
+  Embeddings:    42/42 (100%)
+  Conflicts:     0 detected
+  Duplicates:    2 groups (run brain dedup for details)
+  Grade:         A-
+
+  Warnings:
+  - 3 documents missing frontmatter type
+  - 1 document exceeds 10,000 words (consider splitting)
+```
+
+Health dimensions:
+- **Structure** — frontmatter completeness, directory organization
+- **Retrieval** — embedding coverage, search quality
+- **Trust** — confidence distribution, provenance chains
+- **Performance** — index freshness, query latency
+
+## Auto-Brain (Genie Integration)
+
+When used with [Genie CLI](https://github.com/khal-os/genie), Brain can auto-provision itself for agents:
+
+1. **Agent spawns** — Genie detects the agent's working directory
+2. **Brain discovers or creates** — checks for existing `brain.json`, creates one if missing
+3. **Auto-index** — indexes the agent's context into the brain
+4. **Search available** — agent can immediately query its own knowledge
+
+This is fully automatic when `@khal-os/brain` is installed alongside Genie. No configuration required.
+
+<Info>
+  Auto-brain is opt-in. If `@khal-os/brain` is not installed, Genie works exactly as before with zero behavior change.
+</Info>
