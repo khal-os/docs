@@ -1,0 +1,167 @@
+---
+title: "Quickstart"
+description: "Install Brain, create your first vault, and run your first search in under 5 minutes"
+icon: "rocket"
+---
+
+## Prerequisites
+
+- [Bun](https://bun.sh) v1.1+ or Node.js 20+
+- PostgreSQL 15+ with the `pgvector` extension
+- A Gemini API key for embeddings (`GEMINI_API_KEY`)
+
+## Install
+
+<CodeGroup>
+```bash bun
+bun add @khal-os/brain
+```
+
+```bash npm
+npm install @khal-os/brain
+```
+</CodeGroup>
+
+The package includes both a TypeScript library and a `brain` CLI.
+
+## Create Your First Brain
+
+<Steps>
+<Step title="Initialize a brain vault">
+  ```bash
+  brain init my-brain
+  ```
+
+  This creates a `my-brain/` directory with:
+  - `brain.json` — configuration file
+  - `memory/` — default memory directory
+  - Ready-to-use Obsidian vault structure
+</Step>
+
+<Step title="Set your Gemini API key">
+  Brain uses Gemini Embedding 2 for multimodal vector embeddings.
+
+  ```bash
+  export GEMINI_API_KEY="your-key-here"
+  ```
+
+  <Tip>Also accepted: `GOOGLE_API_KEY`. Either works.</Tip>
+</Step>
+
+<Step title="Add content to your vault">
+  Add markdown files to your brain directory. Brain understands standard markdown with optional YAML frontmatter:
+
+  ```markdown
+  ---
+  title: "Architecture Decision: Use PostgreSQL"
+  type: decision
+  confidence: high
+  ---
+
+  We chose PostgreSQL over SQLite because we need
+  full-text search (tsvector), vector similarity
+  (pgvector), and concurrent access from multiple agents.
+  ```
+
+  You can also mount external directories:
+
+  ```bash
+  brain mount ./docs --brain-id my-brain
+  ```
+</Step>
+
+<Step title="Index and embed">
+  Scan files, chunk them, and generate embeddings:
+
+  ```bash
+  brain update --brain-id my-brain --embed
+  ```
+
+  ```
+  [brain] Scanning my-brain...
+  [brain] Chunking: 12 documents → 47 chunks
+  [brain] Embedding: 47/47 chunks
+  [brain] Done (12 files, 47 chunks, 47 embedded, 3.2s)
+  ```
+</Step>
+
+<Step title="Search">
+  ```bash
+  brain search "why did we choose postgres" --brain-id my-brain
+  ```
+
+  ```
+  ── Results (3 hits, strategy: rag) ──────────────
+  1. [0.92] Architecture Decision: Use PostgreSQL
+     We chose PostgreSQL over SQLite because we need
+     full-text search (tsvector), vector similarity...
+
+  2. [0.71] Infrastructure Setup Guide
+     PostgreSQL 15 is required. Install pgvector...
+
+  3. [0.65] Database Migration Notes
+     Migration 001 creates the brains table...
+  ```
+
+  Each result includes a confidence score (0-1). Brain drops low-confidence noise by default.
+</Step>
+</Steps>
+
+## Using the TypeScript API
+
+```typescript
+import { initBrain, updateBrain, searchBrain } from '@khal-os/brain'
+
+// Create a brain
+const brain = await initBrain({
+  name: 'my-brain',
+  path: './brain',
+  brainType: 'engineering',
+})
+
+// Index files and generate embeddings
+await updateBrain({
+  brainId: brain.id,
+  brainPath: './brain',
+  embed: true,
+})
+
+// Search
+const results = await searchBrain('why did we choose postgres', {
+  brainId: brain.id,
+  limit: 5,
+  minConfidence: 0.5,
+})
+
+for (const hit of results.hits) {
+  console.log(`[${hit.confidence.toFixed(2)}] ${hit.title}`)
+  console.log(`  ${hit.snippet}`)
+}
+```
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `brain init <name>` | Create a new brain vault |
+| `brain update --brain-id <id> --embed` | Index files and generate embeddings |
+| `brain search "<query>" --brain-id <id>` | Search with hybrid BM25 + vector |
+| `brain health --brain-id <id>` | Check vault health and quality |
+| `brain list` | List all registered brains |
+| `brain mount <path> --brain-id <id>` | Mount an external directory |
+| `brain analyze --brain-id <id>` | Analyze brain structure and coverage |
+| `brain grade --brain-id <id>` | Grade brain quality (A-F) |
+
+## Next Steps
+
+<CardGroup cols={2}>
+
+<Card title="Search Deep Dive" icon="magnifying-glass" href="/brain/search">
+  Learn about BM25, vector, and hybrid strategies, confidence scoring, and strategy segments.
+</Card>
+
+<Card title="Configuration Reference" icon="gear" href="/brain/configuration">
+  Full brain.json reference, environment variables, and embedding model options.
+</Card>
+
+</CardGroup>

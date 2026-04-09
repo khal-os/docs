@@ -1,0 +1,200 @@
+---
+title: "Search"
+description: "BM25, vector, and hybrid search strategies with confidence scoring"
+icon: "magnifying-glass"
+---
+
+Brain combines traditional full-text search with vector similarity to deliver high-precision results. Every result carries a confidence score — Brain prefers fewer strong hits over many noisy ones.
+
+## Search Strategies
+
+Brain supports three search strategies, automatically selected based on query characteristics:
+
+### RAG (Retrieval-Augmented Generation)
+
+The default hybrid strategy. Combines BM25 keyword matching with vector cosine similarity using Reciprocal Rank Fusion (RRF).
+
+```bash
+brain search "how does the chunking algorithm work" --brain-id my-brain
+```
+
+Best for: natural language questions, exploratory queries, general knowledge retrieval.
+
+### BM25 (Keyword Search)
+
+Pure full-text search using PostgreSQL's `tsvector` and `tsquery`. Fast, deterministic, and great for exact term matching.
+
+```bash
+brain search "chunking algorithm" --brain-id my-brain --strategy bm25
+```
+
+Best for: known terms, exact phrases, technical identifiers, code symbols.
+
+### Vector (Semantic Search)
+
+Pure vector similarity using Gemini embeddings and pgvector cosine distance. Finds semantically related content even when exact terms don't match.
+
+```bash
+brain search "splitting documents into pieces" --brain-id my-brain --strategy vector
+```
+
+Best for: conceptual queries, finding related content with different wording, cross-language matching.
+
+## Confidence Scoring
+
+Every search result carries a confidence score between 0 and 1:
+
+| Level | Score Range | Meaning |
+|-------|-------------|---------|
+| **High** | 0.80 - 1.00 | Strong match — content directly answers the query |
+| **Medium** | 0.50 - 0.79 | Relevant — related content, may need context |
+| **Low** | 0.30 - 0.49 | Tangential — loosely related |
+| **Noise** | 0.00 - 0.29 | Dropped by default |
+
+Confidence scores factor in:
+- **Search score** — BM25/vector relevance
+- **Source type weight** — decisions and domains score higher than raw notes
+- **Frontmatter confidence** — documents can declare their own confidence level
+- **Provenance** — derived content is capped below its source's confidence
+
+### Filtering by Confidence
+
+```typescript
+const results = await searchBrain('deployment process', {
+  brainId: 'my-brain',
+  minConfidence: 0.7,  // Only high-confidence hits
+  limit: 5,
+})
+```
+
+```bash
+brain search "deployment process" --brain-id my-brain --min-confidence 0.7
+```
+
+## Strategy Segments
+
+For advanced use cases, you can route specific query patterns to specific strategies. Segments are rules that override the default strategy based on query characteristics.
+
+```bash
+# Route code-related queries to BM25 (exact matching works better)
+brain segment set code-queries \
+  --strategy bm25 \
+  --pattern "function|class|import|export|const|let|var"
+
+# Route conceptual questions to vector search
+brain segment set concepts \
+  --strategy vector \
+  --pattern "why|how does|explain|what is"
+```
+
+Segments are evaluated in priority order. The first matching segment wins. If no segment matches, the default strategy is used.
+
+### Listing Segments
+
+```bash
+brain segment list --brain-id my-brain
+```
+
+## Search Options
+
+The full set of options available when searching:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `brainId` | `string` | required | Brain to search |
+| `limit` | `number` | `10` | Maximum results to return |
+| `minConfidence` | `number` | `0.3` | Drop results below this threshold |
+| `strategy` | `string` | auto | Force a specific strategy (`rag`, `bm25`, `vector`) |
+| `explain` | `boolean` | `false` | Include scoring breakdown in results |
+| `modality` | `string` | all | Filter by content modality (`text`, `image`, `audio`) |
+
+## Explain Mode
+
+When debugging search quality, use explain mode to see the scoring breakdown:
+
+```bash
+brain search "database migration" --brain-id my-brain --explain
+```
+
+```
+── Results (2 hits, strategy: rag) ──────────────
+1. [0.88] Database Migration Notes
+   scoring:
+     bm25_score: 0.91
+     vector_score: 0.84
+     rrf_combined: 0.88
+     source_weight: 1.0 (decision)
+     confidence_cap: none
+   Migration 001 creates the brains table...
+
+2. [0.72] Infrastructure Setup Guide
+   scoring:
+     bm25_score: 0.45
+     vector_score: 0.78
+     rrf_combined: 0.72
+     source_weight: 0.9 (domain)
+     confidence_cap: none
+   PostgreSQL 15 is required...
+```
+
+## TypeScript API
+
+```typescript
+import { searchBrain } from '@khal-os/brain'
+
+const results = await searchBrain('query text', {
+  brainId: 'my-brain',
+  limit: 10,
+  minConfidence: 0.5,
+  strategy: 'rag',
+  explain: true,
+})
+
+// results.hits — array of SearchHit objects
+// results.strategy — which strategy was used
+// results.timing — query execution time
+
+for (const hit of results.hits) {
+  console.log(`[${hit.confidence.toFixed(2)}] ${hit.title}`)
+  console.log(`  Source: ${hit.sourceType} | Modality: ${hit.modality}`)
+  if (hit.explain) {
+    console.log(`  BM25: ${hit.explain.bm25Score}`)
+    console.log(`  Vector: ${hit.explain.vectorScore}`)
+  }
+}
+```
+
+## Multimodal Search
+
+Brain embeds text, images, and documents into the same vector space using Gemini's multimodal embeddings. This means you can search for images with text queries and vice versa:
+
+```bash
+# Find images related to "architecture diagram"
+brain search "architecture diagram" --brain-id my-brain --modality image
+```
+
+Supported modalities:
+- `text` — markdown, plain text
+- `image` — PNG, JPG, SVG, WebP
+- `audio` — transcribed audio files
+- `pdf` — extracted PDF text
+
+## Performance Tips
+
+<AccordionGroup>
+  <Accordion title="Keep your vault focused">
+    A brain with 500 high-quality documents outperforms one with 5,000 low-quality ones. Curate what goes in.
+  </Accordion>
+
+  <Accordion title="Use frontmatter confidence">
+    Mark authoritative documents with `confidence: high` in frontmatter. This boosts their ranking in search results.
+  </Accordion>
+
+  <Accordion title="Run brain health regularly">
+    `brain health` detects stale content, missing embeddings, and structural issues. Fix them before they degrade search quality.
+  </Accordion>
+
+  <Accordion title="Use strategy segments for specialized queries">
+    If you know certain query patterns work better with BM25 or vector search, set up segments to route them automatically.
+  </Accordion>
+</AccordionGroup>

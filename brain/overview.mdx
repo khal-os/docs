@@ -1,0 +1,101 @@
+---
+title: "Brain Overview"
+description: "Knowledge graph engine for AI agents — multimodal, self-enhancing, Obsidian-compatible"
+icon: "brain"
+---
+
+Brain is a knowledge graph engine that gives AI agents persistent, searchable memory. It stores content as Obsidian-compatible markdown files on disk, indexes them into PostgreSQL with BM25 and vector search, and returns results ranked by confidence scores.
+
+## Key Features
+
+<CardGroup cols={2}>
+
+<Card title="Hybrid Search" icon="magnifying-glass">
+  Combines BM25 keyword search with vector similarity for high-precision retrieval. Results carry confidence scores — better 3 strong hits than 30 noisy ones.
+</Card>
+
+<Card title="Obsidian-Compatible" icon="vault">
+  Your brain vault is a folder of markdown files. Open it in Obsidian, edit with any text editor, or manage via the CLI. No lock-in.
+</Card>
+
+<Card title="Multimodal Embeddings" icon="images">
+  Uses Gemini Embedding 2 to embed text, images, and documents into a unified vector space. Search across modalities with a single query.
+</Card>
+
+<Card title="Self-Enhancing" icon="arrows-spin">
+  Built-in health checks, conflict detection, deduplication, and automatic link generation keep your knowledge graph clean as it grows.
+</Card>
+
+</CardGroup>
+
+## How It Works
+
+Brain operates on two layers:
+
+1. **Filesystem (source of truth for content):** Markdown files with YAML frontmatter live in a vault directory. Each file is a document — organized into domains, decisions, reflections, and free-form notes.
+
+2. **PostgreSQL (source of truth for metadata and search):** Documents are chunked, embedded, and indexed. BM25 full-text search and pgvector cosine similarity run in Postgres. Strategy routing picks the best search approach per query.
+
+```
+┌─────────────────────────────────────────┐
+│  Vault (Obsidian-compatible markdown)   │
+│  brain/                                 │
+│  ├── domains/                           │
+│  ├── decisions/                         │
+│  ├── reflections/                       │
+│  ├── memory/                            │
+│  └── brain.json                         │
+└──────────────┬──────────────────────────┘
+               │ brain update --embed
+               ▼
+┌─────────────────────────────────────────┐
+│  PostgreSQL                             │
+│  ├── brain_documents (metadata, hash)   │
+│  ├── brain_chunks (text + tsvector)     │
+│  └── brain_embeddings (pgvector)        │
+└─────────────────────────────────────────┘
+```
+
+## Architecture
+
+| Component | Role |
+|-----------|------|
+| **Vault** | Markdown files on disk — the canonical content store |
+| **Chunker** | Splits documents into overlapping chunks for search |
+| **Embedder** | Generates multimodal embeddings via Gemini |
+| **Indexer** | Writes chunks + embeddings to Postgres |
+| **Searcher** | Hybrid BM25 + vector search with confidence scoring |
+| **Strategy Router** | Picks the best search strategy per query type |
+| **Health Engine** | Monitors vault quality, detects conflicts and duplicates |
+
+## Brain Types
+
+Brain supports specialized vault templates for different use cases:
+
+| Type | Purpose |
+|------|---------|
+| `generic` | General-purpose knowledge base |
+| `engineering` | Codebase knowledge, architecture decisions |
+| `pm` | Product specs, roadmaps, stakeholder context |
+| `gtm` | Go-to-market playbooks, competitive intel |
+| `research` | Papers, findings, hypotheses |
+| `ops` | Runbooks, incident history, infrastructure |
+| `personal` | Personal notes, learning journal |
+
+## Next Steps
+
+<CardGroup cols={2}>
+
+<Card title="Quickstart" icon="rocket" href="/brain/quickstart">
+  Install Brain, create your first vault, and run your first search.
+</Card>
+
+<Card title="Search Guide" icon="magnifying-glass" href="/brain/search">
+  Deep dive into BM25, vector, and hybrid search strategies.
+</Card>
+
+<Card title="Configuration" icon="gear" href="/brain/configuration">
+  Full reference for brain.json and environment variables.
+</Card>
+
+</CardGroup>
