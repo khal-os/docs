@@ -1,0 +1,106 @@
+---
+title: "useKhalAuth"
+description: "Read the authenticated user, org, role, and permissions from your pack."
+icon: "user-shield"
+---
+
+`useKhalAuth` returns the current authenticated user. The platform handles sign-in — your pack reads who's here and renders accordingly.
+
+## Signature
+
+```ts
+import type { KhalAuth } from '@khal-os/sdk/app';
+
+function useKhalAuth(): KhalAuth | null;
+```
+
+Returns `null` while no `KhalAuthProvider` is mounted or the user is unauthenticated. Once authenticated, returns a `KhalAuth` object.
+
+## The `KhalAuth` shape
+
+```ts
+interface KhalAuth {
+  userId: string;
+  orgId: string;
+  role: string;
+  permissions: string[];
+  loading: boolean;
+}
+```
+
+<ParamField path="userId" type="string">
+  Stable user identifier. Use it as a subject segment when you need per-user addressing.
+</ParamField>
+
+<ParamField path="orgId" type="string">
+  Organization the user is signed in under. All NATS subjects your pack uses should be scoped by this.
+</ParamField>
+
+<ParamField path="role" type="string">
+  Normalized role slug. Canonical values are `member`, `platform-dev`, `platform-admin`, `platform-owner`.
+</ParamField>
+
+<ParamField path="permissions" type="string[]">
+  Flat list of permission strings granted to the current role. Check membership with `permissions.includes('some:permission')`.
+</ParamField>
+
+<ParamField path="loading" type="boolean">
+  `true` while the provider is still resolving the session. Render a loading state until this flips to `false`.
+</ParamField>
+
+<Note>
+  The platform handles sign-in. Your pack reads the authenticated user — it does not trigger or clear the session itself.
+</Note>
+
+## Typical use — gate rendering on loading + role
+
+```tsx
+import { useKhalAuth } from '@khal-os/sdk/app';
+
+export function Dashboard() {
+  const auth = useKhalAuth();
+
+  if (!auth || auth.loading) {
+    return <p>Loading…</p>;
+  }
+
+  const canManage = auth.permissions.includes('settings:write');
+
+  return (
+    <div>
+      <p>Signed in as {auth.userId} in org {auth.orgId}</p>
+      {canManage && <ManageButton />}
+    </div>
+  );
+}
+```
+
+## Scoping NATS subjects
+
+`useNats` already syncs `orgId` and `userId` from `useKhalAuth` internally, so most code pulls them straight from `useNats`. Reach for `useKhalAuth` when you need `role` or `permissions`, or when the component doesn't already use NATS.
+
+```tsx
+const { orgId, userId } = useNats();
+// orgId + userId come from the current KhalAuth
+```
+
+## Permissions
+
+`permissions` is a pre-computed allow-list for the current role. Check it with `.includes(...)`:
+
+```tsx
+const auth = useKhalAuth();
+if (auth?.permissions.includes('files:write')) {
+  // render editor
+}
+```
+
+A full permissions overview and the list of canonical permission strings will live at `/sdk/permissions` — **TBD in a later wish.**
+
+## What it does not expose
+
+- No JWT, no session token, no refresh plumbing.
+- No `signOut` method — use the desktop shell's sign-out UI.
+- No auth provider internals — your pack should not care whether the shell runs on web or desktop.
+
+If you need a value that isn't on `KhalAuth`, you almost certainly need to get it through a service call, not auth state.

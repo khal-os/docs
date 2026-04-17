@@ -97,6 +97,22 @@
             "pages": [
               "reference/example-packs"
             ]
+          },
+          {
+            "group": "SDK",
+            "pages": [
+              "sdk/hooks-reference",
+              "sdk/useNats",
+              "sdk/useKhalAuth",
+              "sdk/useService"
+            ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "services/backend-overview",
+              "services/environment-config"
+            ]
           }
         ]
       },
