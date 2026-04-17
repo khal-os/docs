@@ -1,0 +1,128 @@
+---
+title: "Your first pack"
+description: "Scaffold a pack from the template, rename five files, edit a React component, and see it running inside the KhalOS shell."
+---
+
+A pack is a self-contained KhalOS app: a frontend React package plus an optional backend service, a manifest that declares both, and a Helm chart for shipping. In this walkthrough you'll go from an empty GitHub repo to a running "Hello FDE" pack in under ten minutes.
+
+<Callout type="info">
+  This page is the fast path. For the full pack contract — every manifest field, every CI workflow, every deploy mode — follow the **Next steps** links at the bottom.
+</Callout>
+
+## 1. Scaffold from the template
+
+Use the template repo to stamp out a new pack repo. GitHub's `--template` flag creates a clean history with none of the template's commit log.
+
+```bash
+gh repo create khal-os/pack-<name> --template khal-os/pack-template --private
+cd pack-<name>
+```
+
+Replace `<name>` with your pack's identifier — lowercase, hyphen-separated, and short. It becomes the npm package name (`@khal-os/pack-<name>`), the Helm chart name, and the manifest `id`.
+
+## 2. Rename the scaffold
+
+The template ships with placeholder `<name>` tokens in five files. Rename them all before your first commit — the build will fail loudly if any are left behind.
+
+<Steps>
+  <Step title="package/package.json">
+    Change `name` to `@khal-os/pack-<name>`.
+  </Step>
+  <Step title="khal-app.json">
+    Update `id`, `name`, `description`, and `frontend.package`.
+  </Step>
+  <Step title="helm/Chart.yaml">
+    Update `name` to `pack-<name>`.
+  </Step>
+  <Step title="helm/values.yaml">
+    Update `image.repository` to match your pack's container image name.
+  </Step>
+  <Step title="Root package.json">
+    Update `name` to `@khal-os/pack-<name>`.
+  </Step>
+</Steps>
+
+<Callout type="tip">
+  All five of these tokens are searchable — `grep -r "<name>" .` from the repo root will list everything still needing your pack's identifier.
+</Callout>
+
+## 3. Edit the React component
+
+The frontend lives in `package/src/index.tsx` and must **default-export** a React component. That's the only contract — any hook, any styling, any UI library. Start with something that proves the full loop works:
+
+```tsx package/src/index.tsx
+import { useState } from 'react';
+
+export default function Pack() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+      <h1>Hello FDE</h1>
+      <p>You clicked {count} times.</p>
+      <button onClick={() => setCount(c => c + 1)}>Click me</button>
+    </div>
+  );
+}
+```
+
+The shell hosts your component inside a window. React state, effects, and context all work as you'd expect.
+
+## 4. (Optional) edit the service
+
+If your pack needs a backend — a long-running process, a NATS subscriber, a side-effectful endpoint — edit `service/src/index.ts`. The template ships a Bun HTTP server with a sample NATS subscription.
+
+If your pack is **frontend-only**, delete the `service/` directory and remove the `backend` block from `khal-app.json`. CI will skip the Docker build and Helm release automatically.
+
+<Callout type="info">
+  **Authoring ≠ deployment.** You declare what your pack needs in `khal-app.json` (permissions, service shape, env vars). The platform provides the runtime — NATS connections, secrets, networking. You never wire up infrastructure yourself.
+</Callout>
+
+## 5. Build and typecheck
+
+```bash
+bun install
+bun run build
+bun run typecheck
+```
+
+`bun run build` produces CJS + ESM bundles plus TypeScript declarations in `package/dist/`. `bun run typecheck` validates both the frontend package and the service (if present).
+
+<Frame>
+  ![Terminal showing bun run build output with dist artifacts listed, followed by a green bun run typecheck summary.](/images/getting-started/bun-build-success.png)
+</Frame>
+
+## 6. See it in the shell
+
+You've got two paths to render your pack in a live shell:
+
+<Tabs>
+  <Tab title="Local shell">
+    Install your pack into a local KhalOS instance. The shell hot-reloads the frontend bundle whenever `bun run build` emits new output, so you can iterate on the component without re-installing.
+  </Tab>
+  <Tab title="nmstx.khal.ai">
+    Publish to GitHub Packages (push your branch — CI handles the rest) and install the resulting `@next` tag into [nmstx.khal.ai](https://nmstx.khal.ai). This is the full production path.
+  </Tab>
+</Tabs>
+
+<Frame>
+  ![The scaffolded pack running inside the KhalOS desktop shell — a titled window with Hello FDE and a click counter.](/images/getting-started/hello-fde-in-shell.png)
+</Frame>
+
+<Callout type="info">
+  For the full CI-driven publish and install story — workflows, tags, rollout — see [Publish your pack](/release/publish-your-pack).
+</Callout>
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Anatomy of a pack" href="/packs/anatomy-of-a-pack">
+    A directory-level tour of every file you just generated and what it's for at runtime.
+  </Card>
+  <Card title="Hooks reference" href="/sdk/hooks-reference">
+    The `@khal-os/sdk` React hooks — how your component talks to the shell, NATS, and other packs.
+  </Card>
+  <Card title="Full-stack pack pattern" href="/patterns/full-stack-pack">
+    The end-to-end reference pattern for packs with both a frontend and a backend service.
+  </Card>
+</CardGroup>
