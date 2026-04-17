@@ -1,58 +1,137 @@
 ---
 title: "What is Khal OS?"
-description: "A browser-based OS shell where packs run for humans and agents — and the FDE's surface for building them."
+description: "A browser-based OS where packs run side-by-side for humans and agents — and how you build, ship, and distribute them."
 icon: "browser"
 ---
 
-Khal OS is a browser-based, macOS-inspired operating shell where **packs** — self-contained apps — run side-by-side for humans and agents. As a Forward Deployed Engineer, you author packs against the `@khal-os/*` SDK, wire them through the platform's NATS bus, and ship them into customer organisations via CI → Helm → deploy rails.
+Khal OS is a browser-based, macOS-inspired operating shell where **packs** — self-contained apps — run side-by-side for humans and agents. You author packs against the `@khal-os/*` SDK, wire them over NATS, and ship them into customer organisations through a release pipeline and catalog you'll meet below.
 
-{/* TODO: replace with architecture diagram — capture from nmstx.khal.ai or design doc */}
 <Frame caption="Pack architecture: frontend package + optional Bun service + Helm chart, consumed by the khal-os shell">
   <img src="/images/hero-light.png" alt="Pack architecture: frontend package + optional Bun service + Helm chart, consumed by the khal-os shell" />
 </Frame>
 
-## What it is
+## A pack is the unit of everything
 
-A pack is the unit of everything you build. Each pack is a frontend package, an optional Bun service, and a Helm chart — declared together in `khal-app.json` and consumed by the shell at runtime.
+Every pack is the same three things — a frontend package, an optional Bun service, and a Helm chart — declared together in `khal-app.json` and consumed by the shell at runtime. Some packs use only the frontend. Others wire up a full backend. A few bundle several frontends under one manifest.
 
-<CardGroup cols={2}>
-  <Card title="Runs in the browser" icon="window-maximize">
-    The shell is a windowed desktop that loads packs as first-class apps, not iframes. Humans click; agents invoke the same surface.
-  </Card>
-  <Card title="Agents are peers" icon="robot">
-    Every pack exposes the same SDK to agents and humans. An agent can open your pack, drive its UI, and call its services — no separate API.
-  </Card>
-</CardGroup>
+<Tabs>
+  <Tab title="Frontend-only (pack-settings)">
+    ```json khal-app.json
+    {
+      "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "id": "settings",
+      "name": "Settings",
+      "version": "1.0.0",
+      "description": "Desktop settings — appearance, services, SSH keys, keyboard shortcuts, system configuration.",
+      "author": "Namastex",
+      "permissions": ["nats:subscribe", "nats:publish", "system:clipboard"],
+      "frontend": {
+        "package": "@khal-os/pack-settings"
+      }
+    }
+    ```
+    No `backend` block. Scaffolds UI only. Ships as a single npm package.
+  </Tab>
+  <Tab title="Full-stack (pack-terminal)">
+    ```json khal-app.json
+    {
+      "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "id": "terminal",
+      "name": "Terminal",
+      "version": "1.0.0",
+      "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
+      "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
+      "frontend": { "package": "@khal-os/pack-terminal" },
+      "backend": {
+        "image": "ghcr.io/khal-os/pack-terminal-service",
+        "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
+        "env": { "KHAL_PTY_SHELL": "/bin/bash", "KHAL_NATS_URL": "nats://nats.khal-system.svc:4222" },
+        "ports": [8002]
+      }
+    }
+    ```
+    Frontend `useNats()` subscribes to PTY output; the service owns the PTY and publishes stdout.
+  </Tab>
+  <Tab title="Bundle (pack-hello)">
+    ```json khal-app.json
+    {
+      "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "id": "hello",
+      "name": "Hello Bundle",
+      "version": "1.0.0",
+      "description": "KhalOS Hello demo bundle — 4 frontend apps + voice engine",
+      "apps": [
+        { "id": "hello-console",        "name": "Hello Console",        "frontend": { "package": "@khal-os/pack-hello-console" } },
+        { "id": "hello-agent-manager",  "name": "Hello Agent Manager",  "frontend": { "package": "@khal-os/pack-hello-agent-manager" } },
+        { "id": "hello-flow-designer",  "name": "Hello Flow Designer",  "frontend": { "package": "@khal-os/pack-hello-flow-designer" } },
+        { "id": "hello-sac",            "name": "Hello SAC",            "frontend": { "package": "@khal-os/pack-hello-sac" } }
+      ],
+      "backend": {
+        "image": "ghcr.io/khal-os/pack-hello-voice-engine",
+        "helmChart": "oci://ghcr.io/khal-os/charts/pack-hello",
+        "env": { "NATS_URL": "nats://nats.khal-system.svc:4222", "HELLO_VOICE_PORT": "8000" }
+      }
+    }
+    ```
+    A single manifest declares **four** frontends plus one shared service. Ship a suite as one pack.
+  </Tab>
+</Tabs>
 
-## What FDEs do
+See [Example packs](/reference/example-packs) for the full reference list, and [khal-app.json schema](/reference/khal-app-json-schema) for every field.
 
-<Steps>
-  <Step title="Author a pack">
-    Scaffold from `pack-template`, build UI with `@khal-os/ui`, and call runtime hooks from `@khal-os/sdk`. Declare manifest, services, and env in `khal-app.json`.
-  </Step>
-  <Step title="Wire it through NATS">
-    Publish and subscribe to the subjects your pack owns. Use `useNats()` in the frontend; the platform handles the bridge.
-  </Step>
-  <Step title="Ship it">
-    CI builds and publishes the pack. A Helm chart installs it into a customer organisation. Customer-side install is one command — see [release/customer-install](/release/customer-install).
-  </Step>
-</Steps>
+## The platform contracts
 
-## What the platform does
-
-These are contracts the kernel guarantees — you consume them, you don't build them.
+Every pack consumes a handful of platform contracts. You don't build them — you call them.
 
 | Capability | Your surface |
 |---|---|
-| **Auth** | `useKhalAuth()` returns the current user + org |
-| **Window management** | The shell launches, sizes, and persists your pack's windows |
-| **NATS bridging** | `useNats()` gives you a bridged client; subjects are scoped to your pack |
-| **Secret injection** | Declare env keys in `khal-app.json`; the platform provides values at runtime |
-| **Tenant isolation** | Every pack runs inside its org's boundary — no extra work from you |
+| **Auth** | [`useKhalAuth()`](/sdk/useKhalAuth) returns `{userId, orgId, role, permissions, loading}` |
+| **Window management** | The shell launches, sizes, persists, and restores your pack's windows |
+| **NATS** | [`useNats()`](/sdk/useNats) gives you a bridged client; subjects are scoped to your pack's namespace |
+| **Services** | [`useService()`](/sdk/useService) calls into your own backend service over NATS |
+| **Secrets and config** | Declare `env[]` entries in `khal-app.json`; the platform injects values at install time |
+| **Multi-tenant isolation** | Every pack runs inside its org's boundary — permissions, data, NATS subjects |
 
-<Note>
-  The kernel is intentionally a black box in this manual. You build against contracts, not internals.
-</Note>
+<CardGroup cols={2}>
+  <Card title="Agents are peers" icon="robot">
+    Every pack exposes the same SDK to agents and humans. An agent can open your pack, drive its UI, and call its services — no separate API surface.
+  </Card>
+  <Card title="Packs are composable" icon="grid">
+    Packs can publish to NATS subjects other packs subscribe to. A notes pack that emits changes is readable by a search pack, a voice pack, a summarizer pack — without coordination.
+  </Card>
+</CardGroup>
+
+## The release pipeline
+
+From `git push` to a shipped artifact, the pipeline is the same for every pack:
+
+<Steps>
+  <Step title="PR to `dev` or `main`">
+    `ci.yml` runs typecheck, lint, test, `helm lint`, and validates `khal-app.json` against the schema. All four gates must be green before merge.
+  </Step>
+  <Step title="Merge to `main`">
+    `release.yml` reads the version from `package/package.json`, tags `v${VERSION}`, and cuts a GitHub Release with auto-generated notes. This is the publish trigger.
+  </Step>
+  <Step title="Artifacts publish">
+    - **Frontend:** `@khal-os/pack-<name>` → GitHub Packages (`@latest` on main, `@next` on dev).
+    - **Service (if declared):** Docker image → `ghcr.io/khal-os/pack-<name>-service:<version>`.
+    - **Helm chart (if declared):** OCI chart → `oci://ghcr.io/khal-os/charts/pack-<name>:<version>`.
+  </Step>
+</Steps>
+
+See [Publish your pack](/release/publish-your-pack) for the CI workflow map and failure modes.
+
+## The catalog
+
+Published packs are indexed by the platform's **catalog** — the component that turns your OCI chart into a one-click install for customer admins. From the platform side:
+
+- Every pack is registered with its manifest, version, and permissions after publish.
+- Customers browse the catalog per-organisation, see the packs they're entitled to, and install them with one action.
+- Cross-org distribution is the catalog's problem, not the FDE's. You publish; the catalog routes.
+
+On the FDE side, this means: do a good job on `khal-app.json` (accurate permissions, clear `env[]`, real description) and your pack lands cleanly in every customer's catalog. Nothing else is required.
+
+See [Customer install](/release/customer-install) for the customer-side handoff contract — what you hand over after publish.
 
 ## Where the automagik toolchain fits
 
@@ -60,31 +139,17 @@ Khal OS is **where packs run**. The [automagik](https://automagik.ai) toolchain 
 
 <CardGroup cols={3}>
   <Card title="genie" icon="sparkles">
-    Orchestrates wishes into shipped code via autonomous agent teams. Great for scaffolding and iterating on packs.
+    Wishes in, PRs out — autonomous agent teams that scaffold and iterate on packs against the template.
   </Card>
   <Card title="omni" icon="messages">
-    Lets your pack's agents speak across every channel — Slack, WhatsApp, Discord, email.
+    Omnichannel messaging. Agents inside your packs speak Slack, WhatsApp, Discord, email — one SDK.
   </Card>
   <Card title="rlmx" icon="brain">
-    A research-grade reasoning loop for agents that need to think before they act.
+    A research-grade reasoning loop for packs whose agents need to think before they act.
   </Card>
 </CardGroup>
 
-One story: **Automagik is how you build. Khal OS is where it runs.**
-
-## What's NOT in this manual
-
-<Accordion title="Kernel internals">
-  How the shell boots, how NATS is clustered, how windows are rendered, how tenants are isolated under the hood — intentionally out of scope. Those docs exist for kernel maintainers, not FDEs.
-</Accordion>
-
-<Accordion title="Deploy-platform internals">
-  The Helm + Makefile orchestrator that moves bytes from CI to a customer's cluster is documented elsewhere. In this manual you only see the thin customer-facing install flow.
-</Accordion>
-
-<Accordion title="Catalog and marketplace plumbing">
-  Pack discovery and cross-org distribution have their own surface. You publish; the platform handles the rest.
-</Accordion>
+**Automagik is how you build. Khal OS is where it runs.** Every pack you've seen on this page was scaffolded, iterated, or refactored with the automagik tools.
 
 ## Next
 

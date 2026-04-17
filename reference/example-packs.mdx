@@ -1,25 +1,152 @@
 ---
 title: 'Example packs'
-description: 'Reference packs — what to read when you need a working template for a common shape.'
+description: 'Reference packs with real manifests — what to read when you need a working template for a common shape.'
 ---
 
-The fastest way to build a new pack is to read one that already works. The table below maps the shape you need to the reference pack closest to it.
+The fastest way to build a new pack is to read one that already works. Every pack below is a real, shipping pack in the khal-os org — with its actual `khal-app.json` manifest pasted inline so you can see the shape before you clone.
 
-| Pack | Pattern | What to learn here | Repo |
-|---|---|---|---|
-| `pack-hello` | Hello-world | The minimum viable pack. Frontend-only, one component, one npm publish. Start here if nothing in the list below fits. | [khal-os/pack-hello](https://github.com/khal-os/pack-hello) |
-| `pack-settings` | Frontend-only | `useKhalAuth`, React state, no service. Canonical frontend-only shape. | [khal-os/pack-settings](https://github.com/khal-os/pack-settings) |
-| `pack-notes` | Frontend-only (public) | Clean data-model example. **Public repo** — the best code you can read without access permissions. | [khal-os/pack-notes](https://github.com/khal-os/pack-notes) |
-| `pack-terminal` | Full-stack (PTY) | `useNats` + Bun service + `Dockerfile` + `helm/` chart. The canonical full-stack reference. | [khal-os/pack-terminal](https://github.com/khal-os/pack-terminal) |
-| `pack-files` | Full-stack | File-manager patterns. Good example of handling sandboxed filesystem access. | [khal-os/pack-files](https://github.com/khal-os/pack-files) |
-| `pack-genie` | Full-stack + AI | How to embed agent features into a pack. Uses the automagik `genie` toolchain under the hood. | [khal-os/pack-genie](https://github.com/khal-os/pack-genie) |
-| `pack-nats-viewer` | Dev tool | Introspecting NATS messages during development. Keep this installed in your dev instance — it earns its keep. | [khal-os/pack-nats-viewer](https://github.com/khal-os/pack-nats-viewer) |
+## Reference map
+
+| Pack | Shape | Why you'd read it |
+|---|---|---|
+| [`pack-hello`](https://github.com/khal-os/pack-hello) | Bundle (4 frontends + 1 service) | Multi-app bundle pattern — several frontends under one manifest, sharing a backend. |
+| [`pack-settings`](https://github.com/khal-os/pack-settings) | Frontend-only | `useKhalAuth`, React state, no service. Canonical frontend-only shape. |
+| [`pack-notes`](https://github.com/khal-os/pack-notes) | Frontend-only (public) | Clean data-model example. **Public repo** — the best code you can read without access permissions. |
+| [`pack-terminal`](https://github.com/khal-os/pack-terminal) | Full-stack (PTY) | `useNats` + Bun service + `Dockerfile` + `helm/` chart. Canonical full-stack reference. |
+| [`pack-files`](https://github.com/khal-os/pack-files) | Full-stack (filesystem) | Sandboxed filesystem access + NATS bridge. Shows full permission surface. |
+| [`pack-genie`](https://github.com/khal-os/pack-genie) | Full-stack + AI | Embedding agent features; uses the automagik `genie` toolchain inside a pack. |
+| [`pack-nats-viewer`](https://github.com/khal-os/pack-nats-viewer) | Dev tool | Introspecting NATS messages during development. Keep it installed in your dev instance — it earns its keep. |
+
+## Real manifests, side by side
+
+Every manifest below is verbatim from the pack repo as of this sprint. Compare how `permissions`, `backend`, `env`, and `ports` scale with the pack's ambition.
+
+### pack-settings — frontend-only, minimal
+
+No `backend` block. No `ports`. Reads user config via `useKhalAuth()` and writes UI preferences via NATS.
+
+```json pack-settings/khal-app.json
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "settings",
+  "name": "Settings",
+  "version": "1.0.0",
+  "description": "Desktop settings — manage appearance, services, SSH keys, keyboard shortcuts, and system configuration.",
+  "author": "Namastex",
+  "permissions": ["nats:subscribe", "nats:publish", "system:clipboard"],
+  "frontend": {
+    "package": "@khal-os/pack-settings"
+  }
+}
+```
+
+### pack-terminal — full-stack, single service
+
+The canonical full-stack pattern. Frontend subscribes to PTY output; backend owns the PTY and publishes stdout over NATS.
+
+```json pack-terminal/khal-app.json
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "terminal",
+  "name": "Terminal",
+  "version": "1.0.0",
+  "icon": "./package/src/assets/icon.svg",
+  "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
+  "author": "KhalOS Core Team",
+  "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
+  "frontend": {
+    "package": "@khal-os/pack-terminal"
+  },
+  "backend": {
+    "image": "ghcr.io/khal-os/pack-terminal-service",
+    "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
+    "env": {
+      "KHAL_PTY_SHELL": "/bin/bash",
+      "KHAL_NATS_URL": "nats://nats.khal-system.svc:4222"
+    },
+    "ports": [8002]
+  }
+}
+```
+
+### pack-files — full-stack, filesystem permissions
+
+Same shape as pack-terminal but a different permission surface (`files:read`, `files:write`) and a customer-scoped OCI registry (`gru.ocir.io` — this pack is deployed into a specific customer's OCI tenancy).
+
+```json pack-files/khal-app.json
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "files",
+  "name": "Files",
+  "version": "1.0.0",
+  "description": "File manager — browse, read, write, and watch filesystem operations over NATS.",
+  "author": "Namastex",
+  "permissions": ["files:read", "files:write", "nats:publish", "nats:subscribe"],
+  "frontend": {
+    "package": "@khal-os/pack-files"
+  },
+  "backend": {
+    "image": "gru.ocir.io/grkjlq07pmjv/pack-files-service",
+    "helmChart": "oci://gru.ocir.io/grkjlq07pmjv/charts/pack-files",
+    "env": {
+      "KHAL_FILES_ROOT": "/data",
+      "KHAL_NATS_URL": "nats://nats.khal-os.svc.cluster.local:4222"
+    },
+    "ports": [8001]
+  }
+}
+```
+
+### pack-hello — bundle (4 frontends + 1 shared service)
+
+When you're shipping a suite of related apps, declare them under a single `apps[]` array. One manifest, one publish, four windowed apps in the shell, sharing one backend.
+
+```json pack-hello/khal-app.json
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "hello",
+  "name": "Hello Bundle",
+  "version": "1.0.0",
+  "description": "KhalOS Hello demo bundle — 4 frontend apps + voice engine",
+  "author": "KhalOS Core Team",
+  "permissions": [],
+  "apps": [
+    { "id": "hello-console",        "name": "Hello Console",        "frontend": { "package": "@khal-os/pack-hello-console" } },
+    { "id": "hello-agent-manager",  "name": "Hello Agent Manager",  "frontend": { "package": "@khal-os/pack-hello-agent-manager" } },
+    { "id": "hello-flow-designer",  "name": "Hello Flow Designer",  "frontend": { "package": "@khal-os/pack-hello-flow-designer" } },
+    { "id": "hello-sac",            "name": "Hello SAC",            "frontend": { "package": "@khal-os/pack-hello-sac" } }
+  ],
+  "backend": {
+    "image": "ghcr.io/khal-os/pack-hello-voice-engine",
+    "helmChart": "oci://ghcr.io/khal-os/charts/pack-hello",
+    "env": {
+      "NATS_URL": "nats://nats.khal-system.svc:4222",
+      "GEMINI_API_KEY": "",
+      "HELLO_VOICE_PORT": "8000"
+    }
+  }
+}
+```
+
+Note the empty `GEMINI_API_KEY` — customers fill that in at install time.
+
+## What the manifests teach you
+
+Reading four real manifests side by side reveals the shape language:
+
+| Want | Look at | Copy this pattern |
+|---|---|---|
+| Minimal pack, no backend | `pack-settings` | `permissions` + `frontend.package` — that's it |
+| Full-stack with one service | `pack-terminal` | `frontend.package` + `backend.{image, helmChart, env, ports}` |
+| Permission-heavy pack | `pack-files` | `permissions` grows with what you touch (filesystem, PTY, network) |
+| Customer-scoped registry | `pack-files` | `backend.image` can target any OCI registry, not just `ghcr.io/khal-os/*` |
+| Multi-frontend suite | `pack-hello` | Swap `frontend` for `apps[]`, keep a single shared `backend` |
 
 ## How to use these
 
 <Steps>
   <Step title="Find the shape closest to what you need">
-    Frontend-only with auth? `pack-settings`. Full-stack with a long-lived process? `pack-terminal`. Pure hello-world baseline? `pack-hello`.
+    Frontend-only with auth? `pack-settings`. Full-stack with a long-lived process? `pack-terminal`. Multi-app suite? `pack-hello`.
   </Step>
   <Step title="Read its `khal-app.json`">
     The manifest tells you what permissions, ports, env, and services the pack uses. Copy the shape, not the identifiers.
@@ -42,10 +169,10 @@ Reference packs evolve. The repo READMEs are the canonical state; this page is a
 ## What's next
 
 <CardGroup cols={2}>
-  <Card title="Patterns: frontend-only" icon="browser" href="/patterns/frontend-only-pack">
-    Pattern writeup of the frontend-only shape.
+  <Card title="khal-app.json schema" icon="file-lines" href="/reference/khal-app-json-schema">
+    Every field these manifests use, exhaustively.
   </Card>
   <Card title="Patterns: full-stack" icon="server" href="/patterns/full-stack-pack">
-    Pattern writeup of the full-stack shape.
+    The pattern writeup of pack-terminal's shape.
   </Card>
 </CardGroup>
