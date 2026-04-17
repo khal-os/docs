@@ -1,0 +1,82 @@
+---
+title: 'Customer install'
+description: 'How a customer admin installs your pack into their Khal-OS instance — the thin version an FDE needs to understand.'
+---
+
+Once your pack is [published](/release/publish-your-pack), a customer admin installs it into their Khal-OS instance. This page intentionally stays thin: **the FDE's job ends at publish; the customer's job begins at install.** What follows is the handoff contract.
+
+## What the customer needs from you
+
+<Card title="The install artifact" icon="package">
+  - **Helm chart OCI URL** (for full-stack packs): `oci://ghcr.io/khal-os/charts/pack-<name>`
+  - **Version** (the tag from your last release, e.g., `v1.2.0`)
+  - **npm package name** (frontend-only packs): `@khal-os/pack-<name>@<version>`
+</Card>
+
+## What the customer needs to configure
+
+If your pack declares `env[]` entries in `khal-app.json`, the customer admin supplies values at install time:
+
+<CodeGroup>
+```json khal-app.json env block
+{
+  "env": [
+    {
+      "key": "MY_EXTERNAL_API_KEY",
+      "description": "API key for the third-party analytics service",
+      "required": true,
+      "type": "secret"
+    },
+    {
+      "key": "FEATURE_BETA_UI",
+      "description": "Enable the beta UI variant",
+      "required": false,
+      "default": "false",
+      "type": "boolean"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+- Entries with `type: "secret"` go into the platform's secret store — the customer pastes a value once, and the platform injects it into your service at runtime.
+- Entries with other types become plain config — readable from the admin UI.
+
+<Warning>
+**Never hardcode customer-specific values** (URLs, tokens, org identifiers) in your pack source. Declare them in `env[]` so each customer supplies their own.
+</Warning>
+
+## What the customer's workflow looks like (summary)
+
+An FDE doesn't run this — but it's useful to understand what happens on the other side so you can hand off cleanly.
+
+1. Admin picks your pack from their platform's install UI (or runs the equivalent CLI command).
+2. Platform pulls the Helm chart from OCI, applies it alongside the shell.
+3. Admin fills in the `env[]` values the pack declared.
+4. Platform injects env, starts the service pod, and loads the frontend npm package into the shell on next launch.
+
+## Versioning and updates
+
+- Bumping the pack version on `main` triggers a new chart (see [Publish your pack](/release/publish-your-pack)).
+- Customers opt into upgrades through their platform's upgrade flow — not automatic.
+- If you break the `env[]` contract (renaming keys, adding required fields), document it in your release notes. Customers need to know before they upgrade.
+
+## What is NOT your problem
+
+- How the customer's platform deploys the chart.
+- How secrets physically land in the container.
+- Pod scheduling, resource quotas, ingress routing.
+- Cross-pack coordination at the cluster level.
+
+Those are platform concerns, not pack concerns. Stay on your side of the line.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="khal-app.json reference" icon="file-lines" href="/reference/khal-app-json-schema">
+    The full manifest schema, including the `env[]` shape.
+  </Card>
+  <Card title="Example packs" icon="book" href="/reference/example-packs">
+    See reference packs for how to shape env declarations cleanly.
+  </Card>
+</CardGroup>

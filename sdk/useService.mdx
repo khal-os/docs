@@ -1,0 +1,151 @@
+---
+title: "useService"
+description: "Call your pack's backend service with a transport-agnostic client."
+icon: "server"
+---
+
+`useService` is a focused wrapper for talking to **your own pack's backend**. It picks the right transport automatically — NATS when your pack runs under KhalOS, Tauri IPC when it runs as a standalone desktop export — and exposes a single interface either way.
+
+Use `useService` when the other end is your pack's own service. Use [`useNats`](/sdk/useNats) directly when you need broadcast, cross-pack pub/sub, or subjects outside your pack's prefix.
+
+## Signature
+
+```ts
+function useService(appId: string): {
+  connected: boolean;
+  transport: 'nats' | 'tauri-ipc';
+  request: (action: string, data?: unknown, timeoutMs?: number) => Promise<unknown>;
+  publish: (action: string, data?: unknown) => void;
+  subscribe: (event: string, callback: (data: unknown) => void) => () => void;
+  ports: Array<{ internalPort: number; proxyPort: number }>;
+  getUrl: (internalPort: number) => string | null;
+};
+```
+
+<ParamField path="appId" type="string" required>
+  Your pack's `id` (matches the `id` in `khal-app.json`). Used as the NATS subject prefix.
+</ParamField>
+
+<ParamField path="connected" type="boolean">
+  `true` when the underlying transport is online.
+</ParamField>
+
+<ParamField path="transport" type="'nats' | 'tauri-ipc'">
+  Which transport the hook is using right now. Detected from `window.__TAURI__`.
+</ParamField>
+
+<ParamField path="request" type="(action, data?, timeoutMs?) => Promise<unknown>">
+  RPC-style call. The hook forms the full subject from `appId` + `action` — you pass short action names like `'agents.list'`.
+</ParamField>
+
+<ParamField path="publish" type="(action, data?) => void">
+  Fire-and-forget publish to your service's action subject.
+</ParamField>
+
+<ParamField path="subscribe" type="(event, callback) => unsubscribe">
+  Subscribe to events your service publishes under `events.<event>`.
+</ParamField>
+
+<ParamField path="ports" type="Array<{ internalPort; proxyPort }>">
+  Port mappings the platform exposes for your service. Populated after first connect.
+</ParamField>
+
+<ParamField path="getUrl" type="(internalPort) => string | null">
+  Resolve an `internalPort` declared in your manifest to a local proxy URL. Returns `null` if no mapping exists yet.
+</ParamField>
+
+## Example — request / reply
+
+```tsx
+import { useService } from '@khal-os/sdk/app';
+
+export function AgentList() {
+  const svc = useService('genie');
+
+  async function refresh() {
+    const reply = await svc.request('agents.list', { status: 'active' });
+    return reply as { agents: Array<{ id: string; name: string }> };
+  }
+
+  return <button type="button" onClick={refresh}>Refresh</button>;
+}
+```
+
+On the service side, subscribe to the matching subject and `msg.respond(...)` — the same pattern [`pack-terminal`'s `spawn` handler](https://github.com/khal-os/pack-terminal/blob/main/service/src/handlers/spawn.ts) uses.
+
+```ts
+// service/src/index.ts
+import { connect } from 'nats';
+
+const nc = await connect({ servers: process.env.KHAL_NATS_URL });
+const org = process.env.KHAL_ORG_ID ?? 'dev';
+
+nc.subscribe(`khal.${org}.genie.agents.list`, {
+  callback: (_err, msg) => {
+    const payload = msg.data.length ? JSON.parse(new TextDecoder().decode(msg.data)) : {};
+    const agents = loadAgents(payload.status);
+    msg.respond(new TextEncoder().encode(JSON.stringify({ agents })));
+  },
+});
+```
+
+## Example — subscribe to events
+
+```tsx
+const svc = useService('genie');
+
+useEffect(() => {
+  const unsub = svc.subscribe('agent.status', (data) => {
+    console.log('status changed', data);
+  });
+  return unsub;
+}, [svc]);
+```
+
+Your service publishes to the matching subject:
+
+```ts
+nc.publish(
+  `khal.${org}.genie.events.agent.status`,
+  new TextEncoder().encode(JSON.stringify({ agentId, status: 'idle' })),
+);
+```
+
+## When to use `useService` vs `useNats`
+
+<CardGroup cols={2}>
+
+<Card title="Use useService" icon="circle-check">
+  Calling your own pack's backend. Short action names, automatic subject prefixing, works the same in desktop export mode.
+</Card>
+
+<Card title="Use useNats" icon="tower-broadcast">
+  Broadcasting to the org, listening to other packs, or using any subject outside `khal.<orgId>.<yourAppId>.*`.
+</Card>
+
+</CardGroup>
+
+## HTTP ports
+
+If your service also serves HTTP (health checks, a small API), declare the ports in your manifest and resolve the local proxy URL with `getUrl`:
+
+```tsx
+const svc = useService('terminal');
+const healthUrl = svc.getUrl(8002);
+if (healthUrl) {
+  fetch(`${healthUrl}/healthz`).then(/* ... */);
+}
+```
+
+The proxy port is assigned by the platform — don't hardcode it.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Backend overview" icon="server" href="/services/backend-overview">
+    The other side of the wire — what a pack service looks like.
+  </Card>
+  <Card title="Full-stack pack" icon="layer-group" href="/patterns/full-stack-pack">
+    End-to-end pattern: frontend hook + Bun service + NATS.
+  </Card>
+</CardGroup>

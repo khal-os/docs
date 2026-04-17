@@ -1,0 +1,41 @@
+---
+title: "SDK hooks reference"
+description: "React hooks from @khal-os/sdk/app for talking to the platform from your pack."
+icon: "plug"
+---
+
+The SDK gives your pack's frontend three React hooks. `useNats` for pub/sub and request/reply across packs. `useKhalAuth` to read the authenticated user. `useService` to call your own pack's backend. Everything else is built on top of these.
+
+| Hook | Purpose | Returns |
+|------|---------|---------|
+| [`useNats`](/sdk/useNats) | NATS pub/sub/request over the bridge | `{ connected, publish, subscribe, request, orgId, userId }` |
+| [`useKhalAuth`](/sdk/useKhalAuth) | Current user + org + role | `KhalAuth \| null` |
+| [`useService`](/sdk/useService) | Call your pack's own backend service | `{ connected, transport, request, publish, subscribe, ports, getUrl }` |
+
+## Import
+
+```tsx
+import { useNats, useKhalAuth, useService } from '@khal-os/sdk/app';
+```
+
+## Explore each hook
+
+<CardGroup cols={3}>
+
+<Card title="useNats" icon="tower-broadcast" href="/sdk/useNats">
+  Publish, subscribe, and request across packs over NATS.
+</Card>
+
+<Card title="useKhalAuth" icon="user-shield" href="/sdk/useKhalAuth">
+  Read the signed-in user's id, org, role, and permissions.
+</Card>
+
+<Card title="useService" icon="server" href="/sdk/useService">
+  Call your pack's backend with a transport-agnostic client.
+</Card>
+
+</CardGroup>
+
+<Note>
+  All three hooks are client-side (`'use client'`). Call them from React components mounted inside a `KhalAuthProvider` — the desktop shell provides this.
+</Note>

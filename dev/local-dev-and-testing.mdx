@@ -1,0 +1,127 @@
+---
+title: 'Local dev and testing'
+description: 'The full local development loop for a Khal pack: build, watch, typecheck, test, debug.'
+---
+
+This page is the full local dev and testing loop for a pack. It assumes you have a pack already scaffolded — if not, start at [Your first pack](/getting-started/your-first-pack).
+
+## Build and watch
+
+From the pack repo root:
+
+<CodeGroup>
+```bash Build once
+bun run build
+```
+
+```bash Rebuild on change
+bun run watch
+```
+</CodeGroup>
+
+The build produces CJS + ESM + `.d.ts` outputs into `package/dist/`. The publish pipeline only ships what's under `package/`.
+
+## Typecheck and lint
+
+<CodeGroup>
+```bash Typecheck
+bun run typecheck
+```
+
+```bash Lint
+bun run lint
+```
+</CodeGroup>
+
+Both run through [Biome](https://biomejs.dev/) under the hood. Fix on save is usually enough.
+
+## Unit tests
+
+Vitest is the default. A tiny NATS mock is enough for most frontend tests:
+
+```ts
+import { describe, it, expect, vi } from 'vitest';
+import { render } from '@testing-library/react';
+import TerminalPack from '../src';
+
+vi.mock('@khal-os/sdk', () => ({
+  useNats: () => ({
+    publish: vi.fn(),
+    subscribe: vi.fn((_subject, _cb) => () => {}),
+  }),
+}));
+
+describe('TerminalPack', () => {
+  it('renders an empty terminal', () => {
+    const { container } = render(<TerminalPack />);
+    expect(container.firstChild).toBeTruthy();
+  });
+});
+```
+
+Run tests:
+
+```bash
+bun run test
+```
+
+## Integration tests
+
+For full-stack packs, a lightweight integration test talks to your service over a local NATS instance:
+
+<Steps>
+  <Step title="Start a local NATS">
+    Any NATS server will do — e.g., `nats-server -js` if you have it installed, or a Docker one-liner.
+  </Step>
+  <Step title="Point your service at it">
+    Set `KHAL_NATS_URL=nats://localhost:4222` when running the service in test mode.
+  </Step>
+  <Step title="Publish and assert">
+    From a test harness, publish on your service's input subject and assert on its output subject.
+  </Step>
+</Steps>
+
+## The `khal-dev` QA CLI
+
+The `@khal-os/dev-cli` package ships `khal-dev` — a pack-focused QA toolkit. Subcommands live under `app-kit/packages/dev-cli/src/commands/`.
+
+Key commands:
+
+- `khal-dev app-create` — scaffold a new pack (alternative to `gh repo create --template`).
+- `khal-dev qa <sub>` — the QA family. Inspect `app-kit/packages/dev-cli/src/commands/qa/` for the current list of sub-checks; `khal-dev qa --help` on your installed copy is authoritative.
+
+<Note>
+The exact QA subcommand list evolves with the toolchain. Run `khal-dev qa --help` for the live list rather than memorizing it.
+</Note>
+
+## Debug tips
+
+<CardGroup cols={2}>
+  <Card title="Frontend: DevTools" icon="wrench">
+    The shell runs in a browser (or Tauri WebView). `F12` opens DevTools — console, network, React DevTools all work.
+  </Card>
+  <Card title="Service: container logs" icon="terminal">
+    `docker logs -f <container>` while running the service via `docker run` locally. In a deployed instance, logs flow through the platform's standard log pipeline — your customer admin knows how to read them.
+  </Card>
+  <Card title="NATS traffic: pack-nats-viewer" icon="magnifying-glass">
+    The reference `pack-nats-viewer` app lets you see subjects flowing through your pack's namespace. Invaluable for debugging message plumbing.
+  </Card>
+  <Card title="Manifest validation" icon="check">
+    `khal-app.json` is validated by `@khal-os/types`. If the SDK complains at build time, the error points at the exact path in your manifest.
+  </Card>
+</CardGroup>
+
+<Frame>
+  <img alt="khal-dev qa output during a local test run" src="/images/khal-dev-qa.png" />
+</Frame>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Publish your pack" icon="upload" href="/release/publish-your-pack">
+    Push → CI builds → publish.
+  </Card>
+  <Card title="khal-app.json reference" icon="file-lines" href="/reference/khal-app-json-schema">
+    The full manifest schema.
+  </Card>
+</CardGroup>

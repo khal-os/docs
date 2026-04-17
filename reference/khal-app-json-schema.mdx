@@ -1,0 +1,150 @@
+---
+title: 'khal-app.json schema'
+description: 'The complete manifest reference, derived from @khal-os/types.'
+---
+
+Every pack ships a `khal-app.json` at its root. The schema lives in [`@khal-os/types`](https://github.com/khal-os/app-kit/tree/main/packages/types) — this page is a field-by-field reference.
+
+The `@khal-os/dev-cli` tool validates your manifest at build time; invalid manifests fail CI before they ship.
+
+## Top-level fields
+
+<ParamField path="id" type="string" required>
+Unique pack identifier. Must match the package directory name. Lowercase, dash-separated.
+</ParamField>
+
+<ParamField path="name" type="string">
+Human-readable pack name shown in the desktop launcher.
+</ParamField>
+
+<ParamField path="version" type="string">
+Semantic version. Normally kept in sync with `package/package.json`.
+</ParamField>
+
+<ParamField path="description" type="string">
+Short description for the marketplace listing.
+</ParamField>
+
+<ParamField path="author" type="string">
+Author name or organization.
+</ParamField>
+
+<ParamField path="icon" type="string">
+Path to the pack icon, relative to the pack root.
+</ParamField>
+
+<ParamField path="permissions" type="string[]">
+Permission strings the pack requires. Examples: `"nats:publish"`, `"nats:subscribe"`, `"user:read"`. Permissions are checked by the platform before the frontend loads and before services are started.
+</ParamField>
+
+<ParamField path="frontend" type="object">
+Frontend package declaration.
+
+<Expandable title="frontend fields">
+  <ParamField path="frontend.package" type="string" required>
+  The npm package name your frontend publishes to (e.g., `@khal-os/pack-terminal`).
+  </ParamField>
+</Expandable>
+</ParamField>
+
+<ParamField path="backend" type="object">
+Backend configuration. Omit entirely for frontend-only packs.
+
+<Expandable title="backend fields">
+  <ParamField path="backend.image" type="string">
+  Container image name (without tag) for your service — e.g., `ghcr.io/khal-os/pack-terminal-service`.
+  </ParamField>
+  <ParamField path="backend.helmChart" type="string">
+  OCI URL of your packaged Helm sub-chart — e.g., `oci://ghcr.io/khal-os/charts/pack-terminal`.
+  </ParamField>
+  <ParamField path="backend.env" type="object">
+  Static env variables your service receives. Keys like `KHAL_NATS_URL` are typically injected here when the service needs a well-known URL.
+  </ParamField>
+  <ParamField path="backend.ports" type="number[]">
+  Ports your service binds internally. The platform assigns proxy ports at runtime.
+  </ParamField>
+</Expandable>
+</ParamField>
+
+<ParamField path="env" type="array">
+Environment variables customers configure per install. See [Customer install](/release/customer-install) for the customer-side flow.
+
+<Expandable title="env entry shape">
+  <ParamField path="key" type="string" required>
+  Variable name (e.g., `MY_API_KEY`).
+  </ParamField>
+  <ParamField path="description" type="string" required>
+  Human-readable description shown in the admin's config UI.
+  </ParamField>
+  <ParamField path="required" type="boolean" required>
+  Whether the pack refuses to run without this variable set.
+  </ParamField>
+  <ParamField path="default" type="string">
+  Default value if not configured.
+  </ParamField>
+  <ParamField path="type" type="'string' | 'number' | 'boolean' | 'secret' | 'url'">
+  Affects validation and UI rendering. `secret` values never appear in the frontend or in logs.
+  </ParamField>
+</Expandable>
+</ParamField>
+
+<ParamField path="views" type="array">
+Optional. If your pack exposes multiple windows or view modes, declare them here with per-view permission and role requirements. Most packs have a single implicit view from `frontend.package`.
+</ParamField>
+
+<ParamField path="services" type="array">
+Alternative to `backend` for multi-service packs. Each entry declares a named service with optional `command`, `entry`, `runtime` (`node` or `python`), `health`, `restart`, and `ports`. See [Backend overview](/services/backend-overview).
+</ParamField>
+
+<ParamField path="sandbox" type="object">
+Advanced. Provision a per-user container when the pack is installed. Used for high-isolation packs (e.g., ephemeral workspaces). See the `app-kit/packages/types` source for full field shape.
+</ParamField>
+
+## Complete example
+
+```json khal-app.json
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "my-pack",
+  "name": "My Pack",
+  "version": "1.0.0",
+  "icon": "./package/src/assets/icon.svg",
+  "description": "What my pack does in one line",
+  "author": "My Company",
+  "permissions": ["nats:publish", "nats:subscribe", "user:read"],
+  "frontend": {
+    "package": "@khal-os/pack-my-pack"
+  },
+  "backend": {
+    "image": "ghcr.io/khal-os/pack-my-pack-service",
+    "helmChart": "oci://ghcr.io/khal-os/charts/pack-my-pack",
+    "env": {
+      "KHAL_NATS_URL": "nats://nats.khal-system.svc:4222"
+    },
+    "ports": [8080]
+  },
+  "env": [
+    {
+      "key": "MY_API_KEY",
+      "description": "API key for the external service",
+      "required": true,
+      "type": "secret"
+    }
+  ]
+}
+```
+
+<Note>
+For fields this page does not enumerate (e.g., `views`, `sandbox`, `desktop`), consult `app-kit/packages/types/src/manifest.ts` directly. The Zod schema there is the canonical source.
+</Note>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Example packs" icon="book" href="/reference/example-packs">
+    Reference packs grouped by pattern — read the manifest that ships in each.
+  </Card>
+  <Card title="Anatomy of a pack" icon="diagram-project" href="/packs/anatomy-of-a-pack">
+    How the manifest fits into the rest of the pack structure.
+  </Card>
+</CardGroup>

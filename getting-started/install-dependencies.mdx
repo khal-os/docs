@@ -1,0 +1,104 @@
+---
+title: "Install dependencies"
+description: "Which package manager to use where — pnpm for the SDK workspace, bun for pack-* repos — and the commands that get everything compiling."
+---
+
+KhalOS uses two package managers on purpose. The **SDK workspace** (the `@khal-os/*` packages you'll import into your pack) is a `pnpm` monorepo. Each **`pack-*` repo** (including `pack-template`) is a `bun` workspace. Knowing which tool runs where is the only setup detail that trips up first-time contributors.
+
+## TL;DR
+
+<CardGroup cols={2}>
+  <Card title="pnpm" icon="box">
+    For the `@khal-os/*` SDK workspace. `pnpm install`, `pnpm build`, `pnpm typecheck`, `pnpm lint`.
+  </Card>
+  <Card title="bun" icon="bolt">
+    For every `pack-*` repo (the scaffold you clone from `pack-template`). `bun install`, `bun run build`, `bun run typecheck`.
+  </Card>
+</CardGroup>
+
+## Node version
+
+Install **Node 20 or newer**. The `@khal-os/*` packages target modern Node and `bun` itself installs cleanly on 20.x. If you use `nvm`, run `nvm use` inside any repo that ships an `.nvmrc`.
+
+```bash
+node --version   # v20.x or newer
+pnpm --version   # any recent release
+bun --version    # 1.x
+```
+
+## The SDK workspace — `pnpm`
+
+The SDK workspace ships the four framework packages your pack will depend on: `@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`, and `@khal-os/dev-cli`. It uses `pnpm` and Turbo under the hood.
+
+<CodeGroup>
+
+```bash pnpm
+pnpm install        # install workspace deps
+pnpm build          # turbo run build — build every package
+pnpm typecheck      # turbo run typecheck across the workspace
+pnpm lint           # biome check
+pnpm lint:fix       # biome check --write .
+```
+
+</CodeGroup>
+
+You usually don't need to run these yourself: the packages publish from CI to GitHub Packages, and your pack consumes them as ordinary npm dependencies. Install them here only if you're debugging an SDK issue or running a local snapshot of the SDK against your pack.
+
+## Pack repos — `bun`
+
+Every `pack-*` repo — including the scaffold you clone from `pack-template` — uses `bun` as both its package manager and its runtime. `bun install` is fast, workspaces are first-class, and the included bundler already matches the toolchain the template expects.
+
+<CodeGroup>
+
+```bash bun
+bun install         # install pack deps
+bun run build       # build the frontend package
+bun run typecheck   # type-check all workspaces
+bun run lint        # biome lint
+bun run test        # run tests (if present)
+```
+
+</CodeGroup>
+
+<Callout type="warning">
+  Don't cross the streams. Running `pnpm install` inside a `pack-*` repo, or `bun install` inside the SDK workspace, will produce a lockfile the other tool ignores — and the next person on the repo will have to untangle it. When in doubt, check which lockfile is already committed.
+</Callout>
+
+## Verifying your setup
+
+After you've cloned the workspace, pick one of each and confirm both install cleanly:
+
+<Steps>
+  <Step title="SDK workspace">
+    ```bash
+    cd repos/app-kit
+    pnpm install && pnpm build
+    ```
+
+    `pnpm build` should finish with every package green in the Turbo summary.
+  </Step>
+
+  <Step title="A reference pack">
+    ```bash
+    cd repos/pack-template
+    bun install && bun run build
+    ```
+
+    `bun run build` should emit CJS + ESM + `.d.ts` outputs into `package/dist/`.
+  </Step>
+</Steps>
+
+<Frame>
+  ![Split terminal showing pnpm install in app-kit on the left and bun install in pack-template on the right, both finishing green.](/images/getting-started/pnpm-bun-split.png)
+</Frame>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Build your first pack" href="/getting-started/your-first-pack">
+    Scaffold a new pack from `pack-template`, rename the five files, and get a "Hello FDE" component shipping.
+  </Card>
+  <Card title="Pack anatomy" href="/packs/anatomy-of-a-pack">
+    A directory-level tour of everything inside a pack — manifest, frontend package, backend service, Helm chart, CI.
+  </Card>
+</CardGroup>

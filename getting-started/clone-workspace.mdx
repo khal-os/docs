@@ -1,0 +1,104 @@
+---
+title: "Clone the workspace"
+description: "One clone. One bootstrap. Every KhalOS repo checked out at consistent commits so you can jump between the SDK, reference packs, and your own pack freely."
+---
+
+KhalOS is developed as a workspace of repositories wired together by a meta-repo. Cloning that meta-repo and running a single bootstrap script gives you the entire ecosystem on disk at known-good commits — the SDK you'll import, the reference packs you'll copy from, and the scaffold you'll start with.
+
+## Before you start
+
+<Callout type="info">
+  You need these installed and signed in **before** running `init.sh`. The bootstrap script exits early with a clear message if anything is missing.
+</Callout>
+
+| Requirement | Why | Check |
+|---|---|---|
+| `git` ≥ 2.30 | Submodule features required by `init.sh` | `git --version` |
+| `gh` CLI, authenticated | HTTPS git auth is delegated to `gh auth git-credential` — no tokens in dotfiles | `gh auth status` |
+| Node 20+ | `@khal-os/*` packages target modern Node | `node --version` |
+| `pnpm` | Workspace package manager for the SDK | `pnpm --version` |
+| `bun` | Runtime + package manager for `pack-*` repos | `bun --version` |
+
+## Clone and bootstrap
+
+<Steps>
+  <Step title="Authenticate with GitHub">
+    Skip if you're already signed in (`gh auth status` prints `Logged in to github.com`).
+
+    ```bash
+    gh auth login
+    ```
+
+    Git HTTPS requests will route through `gh auth git-credential`, so you never need to paste a personal access token into a dotfile.
+  </Step>
+
+  <Step title="Clone with submodules">
+    ```bash
+    git clone --recurse-submodules https://github.com/khal-os/genie.git khal-os
+    cd khal-os
+    ```
+
+    The clone target is named `khal-os` by convention — every guide in these docs assumes the workspace lives in a directory called `khal-os/`.
+  </Step>
+
+  <Step title="Bootstrap the workspace">
+    ```bash
+    ./init.sh
+    ```
+
+    `init.sh` is the **single** bootstrap command. It fetches every sibling repo, aligns each submodule to its tracked branch, verifies the working tree, and prints role-specific next-step hints. It is idempotent — re-run it any time you pull the meta-repo or suspect your submodules drifted.
+
+    <Callout type="tip">
+      Run `./init.sh --help` to see the available options, including `--dry-run` (preview actions) and `--verbose` (extra debug output).
+    </Callout>
+  </Step>
+</Steps>
+
+<Frame>
+  ![Terminal output of ./init.sh showing each submodule align to its tracked branch and a green success summary.](/images/getting-started/init-sh-success.png)
+</Frame>
+
+## What you get
+
+After `init.sh` finishes, the workspace materializes every KhalOS repo so you can jump between the SDK, reference packs, and your own pack freely — without ever needing to clone a second time. You'll edit pack code in one directory, follow a symbol into the SDK in the next, and run everything from the same terminal.
+
+<CardGroup cols={2}>
+  <Card title="Install dependencies" href="/getting-started/install-dependencies">
+    Which package manager to use where — `pnpm` vs `bun` — and how to get the whole workspace compiling.
+  </Card>
+  <Card title="Build your first pack" href="/getting-started/your-first-pack">
+    Scaffold from the template, rename, edit, build — you'll have a running pack by the end of the page.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="`gh: command not found`">
+    Install GitHub CLI from [cli.github.com](https://cli.github.com) and re-run `gh auth login`. The workspace does not support plain HTTPS with cached passwords — it expects `gh auth git-credential` to be wired up.
+  </Accordion>
+  <Accordion title="`init.sh` aborts on git version">
+    Upgrade to git 2.30 or newer. Older git versions don't honor the submodule flags `init.sh` relies on.
+  </Accordion>
+  <Accordion title="I prefer SSH remotes over HTTPS">
+    Swap remotes after the first successful `init.sh`:
+
+    ```bash
+    git remote set-url origin git@github.com:khal-os/genie.git
+    git submodule foreach 'git remote set-url origin $(git remote get-url origin | sed "s|https://github.com/|git@github.com:|")'
+    ```
+
+    Future `init.sh` runs will use SSH.
+  </Accordion>
+</AccordionGroup>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Install dependencies" icon="download" href="/getting-started/install-dependencies">
+    pnpm + bun + the node versions your workspace actually needs.
+  </Card>
+  <Card title="Your first pack" icon="rocket" href="/getting-started/your-first-pack">
+    Scaffold a pack from the template and run it in the shell.
+  </Card>
+</CardGroup>

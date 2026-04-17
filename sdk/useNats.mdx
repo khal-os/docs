@@ -1,0 +1,154 @@
+---
+title: "useNats"
+description: "Publish, subscribe, and request/reply over NATS from your pack's frontend."
+icon: "tower-broadcast"
+---
+
+`useNats` is your pack's async transport. It wraps the platform's NATS bridge so your frontend can talk to your service, react to events from other packs, or broadcast messages across the org.
+
+## Signature
+
+```ts
+function useNats(): {
+  connected: boolean;
+  publish: (subject: string, data?: unknown) => void;
+  subscribe: (subject: string, callback: (data: unknown, subject: string) => void) => () => void;
+  request: (subject: string, data?: unknown, timeoutMs?: number) => Promise<unknown>;
+  orgId: string;
+  userId: string;
+};
+```
+
+<ParamField path="connected" type="boolean">
+  `true` when the NATS bridge is online. Re-renders when connection status changes.
+</ParamField>
+
+<ParamField path="publish" type="(subject, data?) => void">
+  Fire-and-forget publish. No response, no ack. Payload is JSON-serialized.
+</ParamField>
+
+<ParamField path="subscribe" type="(subject, callback) => unsubscribe">
+  Register a handler for a subject (wildcards `*` and `>` supported). Returns an unsubscribe function — call it on unmount.
+</ParamField>
+
+<ParamField path="request" type="(subject, data?, timeoutMs?) => Promise<unknown>">
+  Send a request and await a reply. Rejects after `timeoutMs` (default 5000 ms).
+</ParamField>
+
+<ParamField path="orgId" type="string">
+  Current org id, synced from `useKhalAuth`. Use it to scope subjects.
+</ParamField>
+
+<ParamField path="userId" type="string">
+  Current user id. Useful for per-user subject segments.
+</ParamField>
+
+## Basic example — publish and subscribe
+
+```tsx
+import { useNats } from '@khal-os/sdk/app';
+import { useEffect } from 'react';
+
+export function ChatFeed() {
+  const { connected, subscribe, publish, orgId } = useNats();
+
+  useEffect(() => {
+    if (!connected) return;
+    const unsub = subscribe(`khal.${orgId}.chat.messages`, (data) => {
+      console.log('new message', data);
+    });
+    return unsub;
+  }, [connected, orgId, subscribe]);
+
+  return (
+    <button
+      type="button"
+      onClick={() => publish(`khal.${orgId}.chat.messages`, { text: 'hello' })}
+    >
+      Say hi
+    </button>
+  );
+}
+```
+
+## Request / reply example
+
+When you need an answer, use `request`. This pattern is how `pack-terminal` spawns a PTY session — the frontend requests, the service responds with the new session id.
+
+```tsx
+const { request, orgId } = useNats();
+
+async function spawnPty(cols: number, rows: number) {
+  try {
+    const reply = await request(
+      `khal.${orgId}.terminal.pty.spawn`,
+      { cols, rows },
+      10_000,
+    );
+    return reply as { sessionId: string; pid: number };
+  } catch (err) {
+    // request timed out or replier rejected
+    console.error(err);
+    return null;
+  }
+}
+```
+
+Source: [`pack-terminal/package/src/views/terminal/useNatsPty.ts`](https://github.com/khal-os/pack-terminal/blob/main/package/src/views/terminal/useNatsPty.ts).
+
+## Subject naming
+
+Subjects your pack owns should always be scoped by `orgId` and your pack's id:
+
+```
+khal.<orgId>.<packId>.<action>[.<params>]
+```
+
+Examples from `pack-terminal`:
+
+- `khal.<orgId>.terminal.pty.spawn` — request a new PTY session
+- `khal.<orgId>.terminal.pty.input.<sessionId>` — publish stdin to a session
+- `khal.<orgId>.terminal.pty.output.<sessionId>` — subscribe to stdout
+
+For dynamic subjects, the SDK ships a small builder:
+
+```ts
+import { SubjectBuilder } from '@khal-os/sdk/app';
+
+const ptyInput = new SubjectBuilder('terminal')
+  .action('pty')
+  .action('input')
+  .param()
+  .build();
+
+ptyInput(orgId, sessionId); // → 'khal.<orgId>.terminal.pty.input.<sessionId>'
+```
+
+## Error handling
+
+- `publish` never throws. If the bridge is offline, the frame is dropped.
+- `subscribe` never throws. Callbacks that throw are isolated — other subscribers still fire.
+- `request` rejects with an `Error` when it times out. Always wrap in `try/catch` or `.catch()`.
+- Connection drops: read `connected` and guard side effects on it. Re-subscribing on reconnect is automatic — the bridge replays your active subscriptions.
+
+## Wildcards
+
+Subscribe patterns support NATS wildcards:
+
+- `*` matches exactly one token: `khal.*.terminal.pty.spawn`
+- `>` matches one or more tokens, and must be last: `khal.<orgId>.terminal.pty.>`
+
+<Warning>
+  **Never subscribe to `khal.internal.*` or `khal.catalog.*`.** Those subjects are platform plumbing — they're not part of the SDK contract, they change without notice, and the bridge will reject subscriptions that aren't yours. Scope everything under your pack's id.
+</Warning>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="useKhalAuth" icon="user" href="/sdk/useKhalAuth">
+    Current user, org, role — the auth contract your pack receives.
+  </Card>
+  <Card title="useService" icon="plug" href="/sdk/useService">
+    Call into your pack's own backend service.
+  </Card>
+</CardGroup>

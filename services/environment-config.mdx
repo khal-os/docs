@@ -1,0 +1,120 @@
+---
+title: "Environment + config"
+description: "Declare env vars in khal-app.json. The platform injects values at runtime."
+icon: "key"
+---
+
+Your pack declares the environment variables it needs. The platform provides the values. You never commit secrets to the repo, and you never hand them to the frontend.
+
+This is the contract: **FDE declares, platform provides.**
+
+## Declare env vars in `khal-app.json`
+
+Add an `env` array to your manifest. Each entry names a variable and describes it:
+
+```json
+{
+  "id": "my-pack",
+  "version": "1.0.0",
+  "env": [
+    {
+      "key": "EXAMPLE_API_KEY",
+      "description": "API key for example.com integration",
+      "required": true,
+      "type": "secret"
+    },
+    {
+      "key": "FEATURE_NEW_EDITOR",
+      "description": "Enable the new editor UI",
+      "required": false,
+      "default": "false",
+      "type": "boolean"
+    }
+  ]
+}
+```
+
+### Field reference
+
+<ParamField path="key" type="string" required>
+  The env var name as your service reads it (e.g. `process.env.EXAMPLE_API_KEY`).
+</ParamField>
+
+<ParamField path="description" type="string" required>
+  Human-readable description. Shown in the platform's config UI.
+</ParamField>
+
+<ParamField path="required" type="boolean" required>
+  If `true`, the platform blocks install until a value is set.
+</ParamField>
+
+<ParamField path="default" type="string">
+  Default value when `required` is `false`. Always a string — cast it in your service code.
+</ParamField>
+
+<ParamField path="type" type="'string' | 'number' | 'boolean' | 'secret' | 'url'">
+  Controls how the value is entered and stored. Use `secret` for anything sensitive — API keys, tokens, passwords.
+</ParamField>
+
+<ParamField path="visibility" type="'config' | 'vault'">
+  Optional storage hint. `config` is plain configuration; `vault` forces the platform to use its secret store. Secrets default to `vault`.
+</ParamField>
+
+## Accessing env vars from your service
+
+Standard Bun / Node `process.env`:
+
+```ts
+const apiKey = process.env.EXAMPLE_API_KEY;
+if (!apiKey) {
+  throw new Error('EXAMPLE_API_KEY not set');
+}
+
+const featureNewEditor = process.env.FEATURE_NEW_EDITOR === 'true';
+```
+
+## Frontend — do not read secrets
+
+Your frontend runs in the user's browser or desktop shell. Anything it can read, the user can read.
+
+<Warning>
+  **Never read secrets from the frontend.** If your UI needs configuration, expose a service action that returns only what the frontend truly needs — never the raw secret. Keep the secret on the service.
+</Warning>
+
+For a feature flag or a non-secret value, have your service publish it over NATS or return it from a service action:
+
+```ts
+// service/src/index.ts
+nc.subscribe(`khal.${org}.my-pack.config.public`, {
+  callback: (_err, msg) => {
+    msg.respond(
+      new TextEncoder().encode(JSON.stringify({
+        featureNewEditor: process.env.FEATURE_NEW_EDITOR === 'true',
+      })),
+    );
+  },
+});
+```
+
+```tsx
+// frontend
+const svc = useService('my-pack');
+const { featureNewEditor } = await svc.request('config.public') as { featureNewEditor: boolean };
+```
+
+## What the platform does for you
+
+At install time the platform reads your `env` array, prompts the operator for values, and injects them into your service process. That's it — from your service's perspective, they're just environment variables on `process.env`.
+
+How the platform stores and injects them (secret stores, rotation, pod env vs mounted files) is not your concern and is not part of the SDK contract. Don't build against implementation details — just declare, read, and move on.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Backend overview" icon="server" href="/services/backend-overview">
+    Where your service runs and how it talks to the frontend.
+  </Card>
+  <Card title="Customer install" icon="download" href="/release/customer-install">
+    What the customer admin supplies per install — the other side of `env[]`.
+  </Card>
+</CardGroup>
