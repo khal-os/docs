@@ -118,3 +118,14 @@ process.on('SIGINT', shutdown);
 ## Full-stack pattern
 
 For an end-to-end example — frontend `useNats` subscribing to output from a backend NATS handler — read [`pack-terminal`'s source](https://github.com/khal-os/pack-terminal). The frontend hook [`useNatsPty`](https://github.com/khal-os/pack-terminal/blob/main/package/src/views/terminal/useNatsPty.ts) and the service's [`spawn` handler](https://github.com/khal-os/pack-terminal/blob/main/service/src/handlers/spawn.ts) together show the full request/event loop.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Environment config" icon="key" href="/services/environment-config">
+    Declare env vars and secrets your service needs; let the platform inject them.
+  </Card>
+  <Card title="Publish your pack" icon="upload" href="/release/publish-your-pack">
+    Push → CI → published npm + Docker + Helm.
+  </Card>
+</CardGroup>

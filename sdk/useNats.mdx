@@ -141,3 +141,14 @@ Subscribe patterns support NATS wildcards:
 <Warning>
   **Never subscribe to `khal.internal.*` or `khal.catalog.*`.** Those subjects are platform plumbing — they're not part of the SDK contract, they change without notice, and the bridge will reject subscriptions that aren't yours. Scope everything under your pack's id.
 </Warning>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="useKhalAuth" icon="user" href="/sdk/useKhalAuth">
+    Current user, org, role — the auth contract your pack receives.
+  </Card>
+  <Card title="useService" icon="plug" href="/sdk/useService">
+    Call into your pack's own backend service.
+  </Card>
+</CardGroup>
