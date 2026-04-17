@@ -107,3 +107,14 @@ const { featureNewEditor } = await svc.request('config.public') as { featureNewE
 At install time the platform reads your `env` array, prompts the operator for values, and injects them into your service process. That's it — from your service's perspective, they're just environment variables on `process.env`.
 
 How the platform stores and injects them (secret stores, rotation, pod env vs mounted files) is not your concern and is not part of the SDK contract. Don't build against implementation details — just declare, read, and move on.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Backend overview" icon="server" href="/services/backend-overview">
+    Where your service runs and how it talks to the frontend.
+  </Card>
+  <Card title="Customer install" icon="download" href="/release/customer-install">
+    What the customer admin supplies per install — the other side of `env[]`.
+  </Card>
+</CardGroup>
