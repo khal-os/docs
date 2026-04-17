@@ -1,0 +1,82 @@
+---
+title: "Anatomy of a pack"
+description: "A directory-level tour of every file inside a pack — manifest, frontend package, backend service, Helm chart, CI workflows — and the runtime role each one plays."
+---
+
+A pack is a small repository with a fixed shape. Every file has one job. Learning the shape once means you can read any `pack-*` repo later and know exactly where to look.
+
+## The tree
+
+This is the layout you get when you scaffold from the template:
+
+```
+.
+├── khal-app.json          # Manifest (validated by @khal-os/types)
+├── package/               # Frontend npm package (@khal-os/pack-<name>)
+│   ├── src/index.tsx      # Default export: React component
+│   ├── tsup.config.ts
+│   └── package.json
+├── service/               # (Optional) backend pod
+│   ├── src/index.ts       # Bun HTTP server + NATS subscription
+│   ├── Dockerfile
+│   └── healthcheck.sh
+├── helm/                  # Helm sub-chart for the service
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+└── .github/workflows/     # CI + npm publish + Docker build + Helm release
+```
+
+<Frame>
+  ![Pack directory tree labeled with the runtime role of each file — manifest, frontend package, backend service, Helm chart, CI workflows.](/images/packs/pack-anatomy-annotated.png)
+</Frame>
+
+## What each directory does
+
+<AccordionGroup>
+  <Accordion title="khal-app.json — the manifest" icon="file-json">
+    The declarative contract between your pack and the KhalOS platform. It names the pack, lists permissions, declares services and windows, and points the shell at the frontend package to load. The schema is enforced by `@khal-os/types` at build time, so a broken manifest fails CI before it can be published.
+
+    Every field — required and optional — lives in the [khal-app.json reference](/packs/khal-app-json).
+  </Accordion>
+
+  <Accordion title="package/ — the frontend npm package" icon="react">
+    The React surface of your pack. `package/src/index.tsx` default-exports a component; `tsup.config.ts` produces CJS + ESM + `.d.ts` bundles; `package/package.json` is what gets published to GitHub Packages as `@khal-os/pack-<name>`. The shell loads this package at runtime and mounts the default export into a window.
+  </Accordion>
+
+  <Accordion title="service/ — the optional backend pod" icon="server">
+    The long-running process for packs that need one — a Bun HTTP server, a NATS subscriber, a background worker. `service/src/index.ts` is the entry; `Dockerfile` is multi-stage; `healthcheck.sh` is a TCP probe used by Kubernetes. Delete the whole directory for frontend-only packs — CI will skip the Docker build automatically.
+  </Accordion>
+
+  <Accordion title="helm/ — the service's Helm sub-chart" icon="ship">
+    A packaged Helm chart that deploys your `service/` image. `Chart.yaml` names the chart, `values.yaml` sets defaults (image repository, ports, resources), and `templates/` renders the Kubernetes objects. You don't hand-roll infrastructure — the chart is parameterized and the platform fills in the blanks.
+  </Accordion>
+
+  <Accordion title=".github/workflows/ — CI + release" icon="github">
+    Four workflows handle everything from PR validation to publishing. Every push or tag triggers the right one automatically:
+
+    | Workflow | Trigger | What it does |
+    |---|---|---|
+    | `ci.yml` | Pull request | Lint, typecheck, build, test |
+    | `publish-npm.yml` | Push to `dev` / `main` | Publishes `@khal-os/pack-<name>` to GitHub Packages (`@next` / `@latest`) |
+    | `docker-build.yml` | Push to `dev` / `main` | Builds and pushes the service image (`:next` / `:latest`) |
+    | `helm-release.yml` | Tag `v*` | Packages the chart and pushes it to `oci://ghcr.io/khal-os/charts` |
+
+    Full release walk-through in [Publish your pack](/release/publish-your-pack).
+  </Accordion>
+</AccordionGroup>
+
+## The contract in one sentence
+
+**You declare the shape; the platform provides the runtime.** You write the manifest, the component, and (optionally) the service. The platform handles NATS connections, secrets, networking, installation, and deployment. That boundary is what keeps packs portable and the platform upgradeable.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="khal-app.json reference" href="/packs/khal-app-json">
+    Every manifest field — required and optional — with examples pulled from real packs.
+  </Card>
+  <Card title="Publish your pack" href="/release/publish-your-pack">
+    The CI-driven path from commit to installable pack — branches, tags, and the four workflows that ship it.
+  </Card>
+</CardGroup>

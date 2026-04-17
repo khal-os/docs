@@ -1,0 +1,129 @@
+---
+title: "khal-app.json"
+description: "The manifest file at the root of every pack — what the platform reads to install, run, and route your pack. Required fields, optional fields, and two worked examples."
+---
+
+`khal-app.json` is the manifest every pack ships at its repo root. The platform reads it once at install time and from then on knows your pack's identity, the permissions it requires, the frontend bundle to load, and the backend service (if any) to run. The schema is defined by `@khal-os/types` and validated with Zod, so mistakes are caught at build time rather than in production.
+
+## Required fields
+
+Every pack manifest must declare these fields. The build will fail if any are missing or the wrong shape.
+
+| Field | Type | What it is |
+|---|---|---|
+| `id` | `string` | Stable identifier — lowercase, hyphen-separated. Used for NATS subjects, install paths, and log lines. |
+| `name` | `string` | Human-readable name shown in the launcher and window title. |
+| `version` | `string` | Semantic version of the pack (`1.0.0`). Bumped on every release. |
+| `icon` | `string` | Relative path to the pack icon (SVG recommended). |
+| `description` | `string` | Short blurb shown in the launcher and the marketplace listing. |
+| `author` | `string` | The name or organization shipping the pack. |
+| `permissions` | `string[]` | The capabilities the pack needs (`nats:publish`, `files:read`, etc.). Declare the minimum — the platform enforces the list at runtime. |
+
+<Callout type="info">
+  For a pack with a single frontend view (the common case), you'll also set `frontend.package` to the npm name your pack publishes. It's technically optional in the schema because bundle packs use `apps[]` instead — but you'll include it in 95% of packs.
+</Callout>
+
+## Optional fields
+
+These fields unlock additional pack shapes. You only declare what your pack needs.
+
+| Field | When to use it |
+|---|---|
+| `frontend.package` | The npm package your pack publishes (`@khal-os/pack-<name>`). Required for single-app packs. |
+| `services[]` | Declare long-running processes your pack runs. Each entry names a process, its entry point, health check, and ports. |
+| `windows[]` | Default window sizes and titles for the shell. Override per-view dimensions here. |
+| `backend` | For packs that ship a container image — names the image, Helm chart, env vars, and ports. |
+| `apps[]` | For **bundle packs** that ship multiple frontend apps in one repo. Each entry has its own `id`, `name`, and `frontend.package`. When present, the root `frontend` is ignored. |
+| `sandbox` | For packs that require a per-user container on install. Declares CPU, memory, and volume mounts. |
+
+Every optional field has a deep dive in the exhaustive [khal-app.json schema reference](/reference/khal-app-json-schema) — bookmark it when you start declaring services or sandboxes.
+
+## Worked examples
+
+<Tabs>
+  <Tab title="Frontend-only">
+    The minimum viable manifest — what you get from `pack-template` after renaming. No backend, no services, one frontend package.
+
+    ```json khal-app.json
+    {
+      "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "id": "<name>",
+      "name": "<Name>",
+      "version": "1.0.0",
+      "icon": "./package/src/assets/icon.svg",
+      "description": "A KhalOS pack",
+      "author": "KhalOS Core Team",
+      "permissions": [],
+      "frontend": {
+        "package": "@khal-os/pack-<name>"
+      }
+    }
+    ```
+
+    Source: the scaffold in `pack-template`.
+  </Tab>
+
+  <Tab title="Full-stack">
+    A pack with both a frontend package and a backend service image. The `permissions` list names the capabilities the pack uses; the `backend` block points the platform at the container image and chart.
+
+    ```json khal-app.json
+    {
+      "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "id": "terminal",
+      "name": "Terminal",
+      "version": "1.0.0",
+      "icon": "./package/src/assets/icon.svg",
+      "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
+      "author": "KhalOS Core Team",
+      "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
+      "frontend": {
+        "package": "@khal-os/pack-terminal"
+      },
+      "backend": {
+        "image": "ghcr.io/khal-os/pack-terminal-service",
+        "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
+        "env": {
+          "KHAL_PTY_SHELL": "/bin/bash",
+          "KHAL_NATS_URL": "nats://nats.khal-system.svc:4222"
+        },
+        "ports": [8002]
+      }
+    }
+    ```
+
+    Source: the `pack-terminal` reference pack.
+  </Tab>
+</Tabs>
+
+<Frame>
+  ![Annotated khal-app.json with arrows from each field to the runtime component it configures — id to launcher, permissions to capability gate, frontend.package to the shell loader, backend to the Kubernetes workload.](/images/packs/khal-app-json-annotated.png)
+</Frame>
+
+## Permissions: declare the minimum
+
+`permissions` is where you tell the platform what your pack intends to do. The platform enforces the list at runtime — a pack without `nats:publish` cannot publish to NATS, period.
+
+<Callout type="warning">
+  **Principle of least privilege.** Start with an empty `permissions` array and add entries only when the build surfaces a denied capability. Packs that over-declare permissions are flagged in review.
+</Callout>
+
+Common permissions include `nats:publish`, `nats:subscribe`, `files:read`, `files:write`, `pty:spawn`, `http:fetch`, `system:clipboard`, and `system:notifications`. The full list and the semantics of each lives in the [khal-app.json schema reference](/reference/khal-app-json-schema).
+
+## Secrets: declare, don't embed
+
+Never put secrets directly in `khal-app.json`. The manifest is committed to git and published as part of your pack. Instead, declare what your pack needs and let the platform provide the values at runtime — through the `backend.env` block (for non-sensitive config) or via the platform's secret store (for credentials).
+
+## Validation
+
+The toolchain validates your manifest on every build. If a required field is missing, a type is wrong, or a permission name is unrecognized, you'll see a clear Zod error with the field path before the build proceeds. There's no way to publish a pack with a malformed manifest.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Full schema reference" href="/reference/khal-app-json-schema">
+    Every field, every type, every enum value — the exhaustive reference for writing non-trivial manifests.
+  </Card>
+  <Card title="Anatomy of a pack" href="/packs/anatomy-of-a-pack">
+    Step back out to the directory-level view and see where the manifest sits relative to everything else.
+  </Card>
+</CardGroup>
