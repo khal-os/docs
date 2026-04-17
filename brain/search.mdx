@@ -1,10 +1,39 @@
 ---
-title: "Search"
-description: "BM25, vector, and hybrid search strategies with confidence scoring"
+title: "Retrieval"
+sidebarTitle: "Retrieval"
+description: "The full retrieval pipeline: BM25 + vector + trigram in parallel, fused with RRF, uplifted by the link graph, gated by confidence."
 icon: "magnifying-glass"
 ---
 
-Brain combines traditional full-text search with vector similarity to deliver high-precision results. Every result carries a confidence score — Brain prefers fewer strong hits over many noisy ones.
+Brain's retrieval pipeline is a hybrid that runs BM25, pgvector, and trigram search in parallel, then fuses the ranked lists with Reciprocal Rank Fusion (RRF, k=60). Scores are then uplifted by link-graph proximity, weighted by source authority, and gated by a confidence floor. Retrieval is one of four feature groups — the hero is [Closed-loop intelligence](/brain/auto-kb); the graph operations that make retrieval better over time are in [Knowledge graph](/brain/knowledge-graph).
+
+## Pipeline stages
+
+```
+query ─▶ intent classifier ─▶ [BM25 · vector · trigram] (parallel)
+                                       │
+                                       ▼
+                               RRF fusion (k=60)
+                                       │
+                                       ▼
+                           authority weighting
+                          (source type · frontmatter)
+                                       │
+                                       ▼
+                     link boost (+0.15 per linked hit, cap +0.45)
+                                       │
+                                       ▼
+                     domain routing (if strategy segment matches)
+                                       │
+                                       ▼
+                     confidence gating (min-confidence filter)
+                                       │
+                                       ▼
+                                   results
+
+```
+
+Each stage is pluggable and each stage is testable — which is what makes the [parameter sweep](/brain/auto-kb#the-individual-commands) tractable.
 
 ## Search Strategies
 
@@ -198,3 +227,20 @@ Supported modalities:
     If you know certain query patterns work better with BM25 or vector search, set up segments to route them automatically.
   </Accordion>
 </AccordionGroup>
+
+## Link boost
+
+After RRF fusion and authority weighting, the pipeline runs a **link-boost pass** over the top-N results. For every hit, it uplifts any linked document's score by **+0.15**, capped at **+0.45** total per document. A weak BM25 match that's linked to a strong vector match gets pulled into the result set — the way a human researcher follows citations.
+
+Link generation itself is covered in [Knowledge graph operations](/brain/knowledge-graph#link-generation). Dense linking is the single biggest driver of retrieval quality over time.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Closed-loop intelligence" icon="arrows-spin" href="/brain/auto-kb">
+    How `brain auto-kb` uses the retrieval pipeline to self-optimize.
+  </Card>
+  <Card title="Knowledge graph" icon="diagram-project" href="/brain/knowledge-graph">
+    The graph operations that make retrieval smarter over time.
+  </Card>
+</CardGroup>

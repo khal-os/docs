@@ -124,6 +124,8 @@
             "pages": [
               "brain/overview",
               "brain/quickstart",
+              "brain/auto-kb",
+              "brain/knowledge-graph",
               "brain/search",
               "brain/configuration"
             ]
