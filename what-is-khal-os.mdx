@@ -1,0 +1,98 @@
+---
+title: "What is Khal OS?"
+description: "A browser-based OS shell where packs run for humans and agents — and the FDE's surface for building them."
+icon: "browser"
+---
+
+Khal OS is a browser-based, macOS-inspired operating shell where **packs** — self-contained apps — run side-by-side for humans and agents. As a Forward Deployed Engineer, you author packs against the `@khal-os/*` SDK, wire them through the platform's NATS bus, and ship them into customer organisations via CI → Helm → deploy rails.
+
+{/* TODO: replace with architecture diagram — capture from nmstx.khal.ai or design doc */}
+<Frame caption="Pack architecture: frontend package + optional Bun service + Helm chart, consumed by the khal-os shell">
+  <img src="/images/hero-light.png" alt="Pack architecture: frontend package + optional Bun service + Helm chart, consumed by the khal-os shell" />
+</Frame>
+
+## What it is
+
+A pack is the unit of everything you build. Each pack is a frontend package, an optional Bun service, and a Helm chart — declared together in `khal-app.json` and consumed by the shell at runtime.
+
+<CardGroup cols={2}>
+  <Card title="Runs in the browser" icon="window-maximize">
+    The shell is a windowed desktop that loads packs as first-class apps, not iframes. Humans click; agents invoke the same surface.
+  </Card>
+  <Card title="Agents are peers" icon="robot">
+    Every pack exposes the same SDK to agents and humans. An agent can open your pack, drive its UI, and call its services — no separate API.
+  </Card>
+</CardGroup>
+
+## What FDEs do
+
+<Steps>
+  <Step title="Author a pack">
+    Scaffold from `pack-template`, build UI with `@khal-os/ui`, and call runtime hooks from `@khal-os/sdk`. Declare manifest, services, and env in `khal-app.json`.
+  </Step>
+  <Step title="Wire it through NATS">
+    Publish and subscribe to the subjects your pack owns. Use `useNats()` in the frontend; the platform handles the bridge.
+  </Step>
+  <Step title="Ship it">
+    CI builds and publishes the pack. A Helm chart installs it into a customer organisation. Customer-side install is one command — see [release/customer-install](/release/customer-install).
+  </Step>
+</Steps>
+
+## What the platform does
+
+These are contracts the kernel guarantees — you consume them, you don't build them.
+
+| Capability | Your surface |
+|---|---|
+| **Auth** | `useKhalAuth()` returns the current user + org |
+| **Window management** | The shell launches, sizes, and persists your pack's windows |
+| **NATS bridging** | `useNats()` gives you a bridged client; subjects are scoped to your pack |
+| **Secret injection** | Declare env keys in `khal-app.json`; the platform provides values at runtime |
+| **Tenant isolation** | Every pack runs inside its org's boundary — no extra work from you |
+
+<Note>
+  The kernel is intentionally a black box in this manual. You build against contracts, not internals.
+</Note>
+
+## Where the automagik toolchain fits
+
+Khal OS is **where packs run**. The [automagik](https://automagik.ai) toolchain is **how you build them faster**:
+
+<CardGroup cols={3}>
+  <Card title="genie" icon="sparkles">
+    Orchestrates wishes into shipped code via autonomous agent teams. Great for scaffolding and iterating on packs.
+  </Card>
+  <Card title="omni" icon="messages">
+    Lets your pack's agents speak across every channel — Slack, WhatsApp, Discord, email.
+  </Card>
+  <Card title="rlmx" icon="brain">
+    A research-grade reasoning loop for agents that need to think before they act.
+  </Card>
+</CardGroup>
+
+One story: **Automagik is how you build. Khal OS is where it runs.**
+
+## What's NOT in this manual
+
+<Accordion title="Kernel internals">
+  How the shell boots, how NATS is clustered, how windows are rendered, how tenants are isolated under the hood — intentionally out of scope. Those docs exist for kernel maintainers, not FDEs.
+</Accordion>
+
+<Accordion title="Deploy-platform internals">
+  The Helm + Makefile orchestrator that moves bytes from CI to a customer's cluster is documented elsewhere. In this manual you only see the thin customer-facing install flow.
+</Accordion>
+
+<Accordion title="Catalog and marketplace plumbing">
+  Pack discovery and cross-org distribution have their own surface. You publish; the platform handles the rest.
+</Accordion>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Clone the workspace" icon="download" href="/getting-started/clone-workspace">
+    Get the khal-os workspace onto your machine.
+  </Card>
+  <Card title="Your first pack" icon="rocket" href="/getting-started/your-first-pack">
+    Scaffold, run, and ship a pack end-to-end.
+  </Card>
+</CardGroup>

@@ -1,48 +1,101 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Khal OS",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#18E299",
+    "light": "#4BEAAE",
+    "dark": "#0C8C5E"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Getting Started",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Introduction",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "what-is-khal-os"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Setup & Quickstart",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "getting-started/clone-workspace",
+              "getting-started/install-dependencies",
+              "getting-started/your-first-pack"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Pack Development",
+        "groups": [
+          {
+            "group": "Fundamentals",
+            "pages": [
+              "packs/anatomy-of-a-pack",
+              "packs/khal-app-json"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "SDK",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "sdk/hooks-reference",
+              "sdk/useNats",
+              "sdk/useKhalAuth",
+              "sdk/useService"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Services",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "services/backend-overview",
+              "services/environment-config"
+            ]
+          },
+          {
+            "group": "Patterns",
+            "pages": [
+              "patterns/frontend-only-pack",
+              "patterns/full-stack-pack"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Ship It",
+        "groups": [
+          {
+            "group": "Dev",
+            "pages": [
+              "dev/local-dev-and-testing"
+            ]
+          },
+          {
+            "group": "Release",
+            "pages": [
+              "release/publish-your-pack",
+              "release/customer-install"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Manifest",
+            "pages": [
+              "reference/khal-app-json-schema"
+            ]
+          },
+          {
+            "group": "Packs",
+            "pages": [
+              "reference/example-packs"
             ]
           }
         ]
@@ -51,7 +104,7 @@
         "tab": "Brain",
         "groups": [
           {
-            "group": "Brain",
+            "group": "@khal-os/brain",
             "pages": [
               "brain/overview",
               "brain/quickstart",
@@ -60,42 +113,8 @@
             ]
           }
         ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
-          }
-        ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
@@ -104,33 +123,26 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "GitHub",
+        "href": "https://github.com/khal-os/docs"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
+    ]
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/khal-os"
     }
   }
 }
