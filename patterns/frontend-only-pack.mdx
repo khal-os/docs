@@ -65,27 +65,31 @@ The `backend` and `services` keys are simply absent. The platform infers "fronte
 
 ## Typical SDK usage
 
-Frontend-only packs reach for two hooks:
-
-- `useKhalAuth()` — current user, org, role, and `signOut`. See [`sdk/useKhalAuth`](/sdk/useKhalAuth).
-- `useKhalConfig()` — read and write the pack's own `env[]` values at runtime (if declared in the manifest).
-
-React state handles everything else. No `useNats` unless you want to broadcast user-visible events to other packs (e.g., "theme changed").
+Frontend-only packs reach for one hook: [`useKhalAuth()`](/sdk/useKhalAuth) — exposes the current `userId`, `orgId`, `role`, `permissions`, and a `loading` flag. React state handles everything else. Reach for `useNats` only when you want to broadcast user-visible events to other packs (e.g., "theme changed").
 
 ```tsx
-import { useKhalAuth } from '@khal-os/sdk';
+import { useKhalAuth } from '@khal-os/sdk/app';
 
 export default function SettingsPack() {
-  const { user, signOut } = useKhalAuth();
+  const auth = useKhalAuth();
+
+  if (!auth || auth.loading) {
+    return <p>Loading…</p>;
+  }
 
   return (
     <div>
-      <h2>Signed in as {user.email}</h2>
-      <button onClick={signOut}>Sign out</button>
+      <h2>Signed in as {auth.userId}</h2>
+      <p>Org: {auth.orgId}</p>
+      <p>Role: {auth.role}</p>
     </div>
   );
 }
 ```
+
+<Note>
+The SDK does not expose a `signOut` method — sign-out is a desktop-shell concern, not a pack concern. The user signs out of KhalOS itself, not out of an individual pack. See [`useKhalAuth`](/sdk/useKhalAuth) for the full contract.
+</Note>
 
 ## Publishing
 
