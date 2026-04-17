@@ -1,0 +1,67 @@
+---
+title: 'Publish your pack'
+description: 'Push → CI → published. The CI-driven publish flow inherited from pack-template.'
+---
+
+Publishing a Khal pack is a **git push**, not an SSH session. The CI workflows you inherit from `pack-template` do the rest: lint, typecheck, test, Helm lint, manifest validation, release tag, publish. This page walks through the inherited pipeline and explains what lands where.
+
+## The flow
+
+<Steps>
+  <Step title="Open a PR">
+    The `ci.yml` workflow runs: typecheck, lint, test, `helm lint`, and a check that `khal-app.json` exists. All four must pass before merge.
+  </Step>
+  <Step title="Merge to `main`">
+    The `release.yml` workflow runs on `push: main`. It:
+    - Reads the version from `package/package.json`.
+    - Tags `v${VERSION}` and pushes the tag.
+    - Creates a GitHub Release with auto-generated notes from commits since the previous tag.
+  </Step>
+  <Step title="Publish">
+    The frontend npm package publishes to **GitHub Packages** as `@khal-os/pack-<name>`. If your pack has a backend, the Docker image publishes to `ghcr.io/khal-os/pack-<name>-service` and the Helm chart to `oci://ghcr.io/khal-os/charts/pack-<name>`.
+  </Step>
+  <Step title="Install">
+    A customer admin installs the published version through their platform's install flow. See [Customer install](/release/customer-install).
+  </Step>
+</Steps>
+
+<Note>
+You never SSH into a cluster. You never run `kubectl apply`. You never push a Docker image by hand. Your job ends at "merge the PR". The rest is CI.
+</Note>
+
+## Inherited workflows
+
+Every pack scaffolded from `pack-template` ships these workflows in `.github/workflows/`:
+
+| Workflow | Trigger | Does |
+|---|---|---|
+| `ci.yml` | PR to `dev` or `main` | Typecheck, lint, test, Helm lint, manifest validation. |
+| `ci-guards.yml` | PR | Secret scanning (gitleaks), `CLAUDE.md` presence check, `CODEOWNERS` check. |
+| `release.yml` | Push to `main` | Tag + GitHub Release + version-driven publish. |
+
+Customize behavior by editing these workflows in your pack repo — they're yours, not inherited-at-runtime.
+
+## Versioning
+
+Pack versions live in `package/package.json` and are the single source of truth. Bump the `version` field in the same PR that merits a release, and `release.yml` will tag + release automatically on merge.
+
+<Warning>
+The version must be a **new** version on every merge to `main` that ships user-visible changes. Merging without a bump will cause `release.yml` to fail to re-tag, and customers won't see a new chart version.
+</Warning>
+
+## What a merge does not do
+
+- Does **not** deploy to a customer's instance. Customers pull new pack versions through their own platform flow.
+- Does **not** guarantee your new pack version is the default. Customers may pin to earlier versions.
+- Does **not** invalidate existing users' sessions in the shell.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Customer install" icon="download" href="/release/customer-install">
+    How a customer admin consumes your published pack.
+  </Card>
+  <Card title="Local dev and testing" icon="flask" href="/dev/local-dev-and-testing">
+    Test before you push.
+  </Card>
+</CardGroup>

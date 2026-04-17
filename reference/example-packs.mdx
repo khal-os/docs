@@ -1,0 +1,51 @@
+---
+title: 'Example packs'
+description: 'Reference packs — what to read when you need a working template for a common shape.'
+---
+
+The fastest way to build a new pack is to read one that already works. The table below maps the shape you need to the reference pack closest to it.
+
+| Pack | Pattern | What to learn here | Repo |
+|---|---|---|---|
+| `pack-hello` | Hello-world | The minimum viable pack. Frontend-only, one component, one npm publish. Start here if nothing in the list below fits. | [khal-os/pack-hello](https://github.com/khal-os/pack-hello) |
+| `pack-settings` | Frontend-only | `useKhalAuth`, React state, no service. Canonical frontend-only shape. | [khal-os/pack-settings](https://github.com/khal-os/pack-settings) |
+| `pack-notes` | Frontend-only (public) | Clean data-model example. **Public repo** — the best code you can read without access permissions. | [khal-os/pack-notes](https://github.com/khal-os/pack-notes) |
+| `pack-terminal` | Full-stack (PTY) | `useNats` + Bun service + `Dockerfile` + `helm/` chart. The canonical full-stack reference. | [khal-os/pack-terminal](https://github.com/khal-os/pack-terminal) |
+| `pack-files` | Full-stack | File-manager patterns. Good example of handling sandboxed filesystem access. | [khal-os/pack-files](https://github.com/khal-os/pack-files) |
+| `pack-genie` | Full-stack + AI | How to embed agent features into a pack. Uses the automagik `genie` toolchain under the hood. | [khal-os/pack-genie](https://github.com/khal-os/pack-genie) |
+| `pack-nats-viewer` | Dev tool | Introspecting NATS messages during development. Keep this installed in your dev instance — it earns its keep. | [khal-os/pack-nats-viewer](https://github.com/khal-os/pack-nats-viewer) |
+
+## How to use these
+
+<Steps>
+  <Step title="Find the shape closest to what you need">
+    Frontend-only with auth? `pack-settings`. Full-stack with a long-lived process? `pack-terminal`. Pure hello-world baseline? `pack-hello`.
+  </Step>
+  <Step title="Read its `khal-app.json`">
+    The manifest tells you what permissions, ports, env, and services the pack uses. Copy the shape, not the identifiers.
+  </Step>
+  <Step title="Read its `package/src/`">
+    The frontend entry. See which SDK hooks it reaches for.
+  </Step>
+  <Step title="Read its `service/` (if full-stack)">
+    The Bun entry. See how it subscribes, how it publishes, and how it handles the NATS connection.
+  </Step>
+  <Step title="Diff against `pack-template`">
+    Anything in your pack that looks different from `pack-template` should be justified by your pack's requirements. Drift from the template is a maintenance bill.
+  </Step>
+</Steps>
+
+<Note>
+Reference packs evolve. The repo READMEs are the canonical state; this page is a map. If a reference pack's README contradicts this page, trust the README.
+</Note>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Patterns: frontend-only" icon="browser" href="/patterns/frontend-only-pack">
+    Pattern writeup of the frontend-only shape.
+  </Card>
+  <Card title="Patterns: full-stack" icon="server" href="/patterns/full-stack-pack">
+    Pattern writeup of the full-stack shape.
+  </Card>
+</CardGroup>

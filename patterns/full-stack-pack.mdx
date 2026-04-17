@@ -1,0 +1,158 @@
+---
+title: 'Full-stack pack'
+description: 'A pack with a backend service. pack-terminal (PTY over NATS) as the reference.'
+---
+
+<Frame>
+  <img alt="pack-terminal with an active PTY session inside khal-os" src="/images/pack-terminal-preview.png" />
+</Frame>
+
+A **full-stack pack** pairs a frontend React component with a backend service that runs as a pod alongside the shell. The frontend talks to its service over **NATS** — never direct HTTP, never direct TCP. `pack-terminal` is the reference: the browser subscribes to a PTY stream, the service spawns and owns the PTY.
+
+## When to pick this shape
+
+<CardGroup cols={2}>
+  <Card title="Use full-stack when" icon="check">
+    - The pack owns a long-lived process (PTY, daemon, websocket client).
+    - You need server-side secrets or API credentials.
+    - You hold state you don't trust to the browser.
+  </Card>
+  <Card title="Stay frontend-only when" icon="browser">
+    - The pack is a UI over data the platform already exposes.
+    - → [Frontend-only pack pattern](/patterns/frontend-only-pack)
+  </Card>
+</CardGroup>
+
+## Directory shape
+
+```
+pack-terminal/
+├── khal-app.json         # Manifest — declares backend + services
+├── package/              # Frontend npm package
+│   └── src/index.tsx     # Uses useNats() to subscribe to PTY output
+├── service/              # Backend pod
+│   ├── src/index.ts      # Bun server, subscribes to PTY input subject, spawns PTY
+│   ├── Dockerfile        # Multi-stage build
+│   └── healthcheck.sh    # TCP health probe
+├── helm/                 # Helm sub-chart
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+└── .github/workflows/    # CI + npm + Docker + Helm publish
+```
+
+## Manifest
+
+<CodeGroup>
+```json khal-app.json (full-stack)
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "terminal",
+  "name": "Terminal",
+  "version": "1.0.0",
+  "icon": "./package/src/assets/icon.svg",
+  "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
+  "author": "KhalOS Core Team",
+  "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
+  "frontend": {
+    "package": "@khal-os/pack-terminal"
+  },
+  "backend": {
+    "image": "ghcr.io/khal-os/pack-terminal-service",
+    "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
+    "env": {
+      "KHAL_PTY_SHELL": "/bin/bash"
+    },
+    "ports": [8002]
+  }
+}
+```
+</CodeGroup>
+
+The `backend` block tells the platform which container image to pull, which Helm chart to install, and which env to inject.
+
+## Frontend ↔ service contract
+
+```
+┌──────────── Your pack ────────────┐
+│                                   │
+│  package/src/index.tsx            │
+│    ↓ useNats().subscribe(...)     │
+│                                   │
+│  ··· NATS bridge (SDK) ···        │
+│                                   │
+│    ↑ useNats().publish(...)       │
+│                                   │
+│  service/src/index.ts             │
+│    owns the PTY + publishes       │
+│    stdout on your pack's subject  │
+└───────────────────────────────────┘
+```
+
+<Warning>
+Your pack owns subjects scoped to **your app's own namespace**. Never subscribe to `khal.internal.*` or `khal.catalog.*` — those are platform plumbing and not part of the FDE surface. See [`useNats`](/sdk/useNats) for the subject-naming guidance.
+</Warning>
+
+### Frontend snippet
+
+```tsx
+import { useNats } from '@khal-os/sdk';
+import { Terminal } from 'xterm';
+
+export default function TerminalPack() {
+  const nats = useNats();
+  const term = new Terminal();
+
+  // Subscribe to stdout from the service
+  nats.subscribe('terminal.stdout', (msg) => term.write(msg.data));
+
+  // Send keystrokes
+  term.onData((data) => nats.publish('terminal.stdin', data));
+
+  return <div ref={(el) => el && term.open(el)} />;
+}
+```
+
+### Service snippet (Bun)
+
+```ts
+import { connect } from 'nats';
+import { spawn } from 'node-pty';
+
+const nc = await connect({ servers: process.env.KHAL_NATS_URL });
+const pty = spawn(process.env.KHAL_PTY_SHELL!, [], {});
+
+nc.subscribe('terminal.stdin', { callback: (_err, msg) => pty.write(msg.string()) });
+pty.onData((data) => nc.publish('terminal.stdout', data));
+```
+
+<Note>
+The service never renders UI. Rendering is the frontend's job. The service's job is to own state and republish it over NATS.
+</Note>
+
+## Deploy shape
+
+<Steps>
+  <Step title="Push">
+    CI publishes the frontend npm package AND tags a Docker image.
+  </Step>
+  <Step title="Tag a release">
+    CI packages the Helm sub-chart and pushes it to `oci://ghcr.io/khal-os/charts/pack-terminal`.
+  </Step>
+  <Step title="Install">
+    A customer admin installs the pack — the platform deploys the service pod alongside the shell, injects env, and the frontend picks up the new pack on next load.
+  </Step>
+</Steps>
+
+The platform manages pod lifecycle, restart policy, and secret injection. **Your pack should be stateless at the process level** — persist anything important through the platform's data services, not process memory.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Environment config" icon="key" href="/services/environment-config">
+    How to declare secrets the platform will inject.
+  </Card>
+  <Card title="Publish your pack" icon="upload" href="/release/publish-your-pack">
+    Full npm + Docker + Helm pipeline.
+  </Card>
+</CardGroup>

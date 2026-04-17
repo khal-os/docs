@@ -1,0 +1,117 @@
+---
+title: 'Frontend-only pack'
+description: 'The canonical pattern when your pack does not need a backend service. pack-settings as the reference.'
+---
+
+<Frame>
+  <img alt="pack-settings running inside the khal-os shell" src="/images/pack-settings-preview.png" />
+</Frame>
+
+A **frontend-only pack** is the simplest shape a Khal pack can take. No `service/` directory, no Docker image, no Helm chart — just a React component published as an npm package that the shell loads when your pack is installed. `pack-settings` is the reference implementation for this pattern.
+
+## When to pick this shape
+
+<CardGroup cols={2}>
+  <Card title="Use frontend-only when" icon="check">
+    - The pack needs no long-running backend process.
+    - All data comes from the platform (the current user, org-scoped APIs the shell already exposes) or from third-party APIs called straight from the browser.
+    - You need only one window, with no scheduled or background work.
+  </Card>
+  <Card title="Go full-stack when" icon="server">
+    - The pack owns stateful data you don't want to trust to the browser.
+    - You need to hold a persistent process (PTY, daemon, subscription).
+    - You need server-side secrets that must never touch the frontend.
+
+    → [Full-stack pack pattern](/patterns/full-stack-pack)
+  </Card>
+</CardGroup>
+
+## Directory shape
+
+```
+pack-settings/
+├── khal-app.json         # Manifest — no services[] entry
+├── package/
+│   ├── src/index.tsx     # Default export: a React component
+│   ├── tsup.config.ts    # CJS + ESM + .d.ts build
+│   └── package.json      # Publishes @khal-os/pack-settings
+├── package.json          # Workspace root
+└── .github/workflows/    # CI + npm publish
+```
+
+No `service/`. No `helm/`. No `Dockerfile`. The pack lives entirely in the browser.
+
+## Manifest
+
+<CodeGroup>
+```json khal-app.json (frontend-only)
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "id": "settings",
+  "name": "Settings",
+  "version": "1.0.0",
+  "icon": "./package/src/assets/icon.svg",
+  "description": "User preferences and workspace settings",
+  "author": "KhalOS Core Team",
+  "permissions": ["user:read", "user:update"],
+  "frontend": {
+    "package": "@khal-os/pack-settings"
+  }
+}
+```
+</CodeGroup>
+
+The `backend` and `services` keys are simply absent. The platform infers "frontend-only" from their absence.
+
+## Typical SDK usage
+
+Frontend-only packs reach for two hooks:
+
+- `useKhalAuth()` — current user, org, role, and `signOut`. See [`sdk/useKhalAuth`](/sdk/useKhalAuth).
+- `useKhalConfig()` — read and write the pack's own `env[]` values at runtime (if declared in the manifest).
+
+React state handles everything else. No `useNats` unless you want to broadcast user-visible events to other packs (e.g., "theme changed").
+
+```tsx
+import { useKhalAuth } from '@khal-os/sdk';
+
+export default function SettingsPack() {
+  const { user, signOut } = useKhalAuth();
+
+  return (
+    <div>
+      <h2>Signed in as {user.email}</h2>
+      <button onClick={signOut}>Sign out</button>
+    </div>
+  );
+}
+```
+
+## Publishing
+
+<Steps>
+  <Step title="Push to dev">
+    CI publishes `@khal-os/pack-settings@next` to GitHub Packages.
+  </Step>
+  <Step title="Merge to main">
+    CI publishes `@latest`. No Docker step; no Helm step.
+  </Step>
+  <Step title="Install into an instance">
+    A customer admin adds `@khal-os/pack-settings@latest` through their platform's install flow. The shell loads the npm package on next launch.
+  </Step>
+</Steps>
+
+<Note>
+Frontend-only packs ship faster than full-stack ones because there is no container image to build and no Helm chart to package. Keep the pack frontend-only unless you need server-side behavior.
+</Note>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Full-stack pack pattern" icon="server" href="/patterns/full-stack-pack">
+    When you need a backend, go here.
+  </Card>
+  <Card title="Publish your pack" icon="upload" href="/release/publish-your-pack">
+    The full publish pipeline (npm → Docker → Helm).
+  </Card>
+</CardGroup>
