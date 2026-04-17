@@ -1,97 +1,49 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Khal OS — the browser-based OS for agents and the humans who ship with them"
+description: "The FDE manual for building, shipping, and deploying packs on khal-os."
 ---
 
-## Setting up
+**Automagik builds the primitives. Khal-os runs on them.** `automagik-dev` ships the agentic development toolchain — `genie` orchestrates wishes into shipped code via autonomous teams, `omni` lets agents speak across every channel humans live in, and `rlmx` gives them a research-grade reasoning loop. `khal-os` is the operating system that hosts what those agents build — a browser-based, macOS-inspired shell where every human and every agent lives alongside the apps ("packs") they use together. Forward Deployed Engineers hired on khal-os don't rebuild the primitives; they reach for the automagik toolchain to author khal packs faster, then ship those packs into customer organisations via khal-os's deploy rails. **One story: Automagik is how you build. Khal-os is where it runs.**
 
-Get your documentation site up and running in minutes.
+<Frame caption="The khal-os desktop shell with a handful of packs running.">
+  ![The khal-os desktop shell with a handful of packs running](/images/hero-desktop.png)
+</Frame>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+<Note>
+  This manual is written for Forward Deployed Engineers shipping packs onto khal-os. If you're evaluating the product, start with [What is Khal-OS](/what-is-khal-os).
+</Note>
 
-## Make it yours
+## Day 1 on khal-os
 
-Design a docs site that looks great and empowers your users.
+Four steps take you from an empty laptop to a pack running in the shell.
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Clone the workspace" icon="download" href="/getting-started/clone-workspace">
+    Pull the khal workspace, wire your environment, and confirm the shell boots locally.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Your first pack" icon="cube" href="/getting-started/your-first-pack">
+    Scaffold a pack from the template and see it appear in the khal-os desktop.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Hooks reference" icon="plug" href="/sdk/hooks-reference">
+    The `@khal-os/*` React hooks you'll reach for — auth, NATS, services, and more.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Publish your pack" icon="rocket" href="/release/publish-your-pack">
+    Tag a release, push to CI, and prepare the Helm chart customers will install.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Learn by example
 
-Everything you need to create world-class documentation.
+Real patterns beat abstract advice. These pages walk through packs you can copy from.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={3}>
+  <Card title="Frontend-only pack" icon="browser" href="/patterns/frontend-only-pack">
+    A pack that lives entirely in the browser shell. No backend service required.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Full-stack pack" icon="layer-group" href="/patterns/full-stack-pack">
+    A pack with a Bun service behind it, talking to the shell over NATS.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Example packs" icon="book-open" href="/reference/example-packs">
+    Reference packs you can read end-to-end to see the conventions applied.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+</CardGroup>
