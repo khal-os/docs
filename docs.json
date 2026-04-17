@@ -3,11 +3,25 @@
   "theme": "mint",
   "name": "Khal OS",
   "colors": {
-    "primary": "#18E299",
-    "light": "#4BEAAE",
-    "dark": "#0C8C5E"
+    "primary": "#D49355",
+    "light": "#E0B079",
+    "dark": "#A06F3E"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "decoration": "gradient"
+  },
+  "fonts": {
+    "heading": { "family": "Geist" },
+    "body": { "family": "Geist" }
   },
   "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
   "navigation": {
     "tabs": [
       {
