@@ -90,13 +90,27 @@ Or edit `brain.json` directly — it's a plain JSON file.
 |----------|----------|-------------|
 | `GEMINI_API_KEY` | Yes | Google Gemini API key for embeddings |
 | `GOOGLE_API_KEY` | No | Alternative to `GEMINI_API_KEY` (either works) |
-| `BRAIN_PG_URL` | No | PostgreSQL connection URL. Default: auto-detected from local Postgres |
-| `BRAIN_PG_PORT` | No | PostgreSQL port override |
+| `DATABASE_URL` | No | Postgres connection URL — selects **persistent mode** (see below) |
+| `BRAIN_DATA_DIR` | No | Directory for embedded pgserve to persist to — selects **data-dir mode** |
+| `BRAIN_PG_URL` | No | Explicit PostgreSQL connection URL override |
+| `BRAIN_PG_PORT` | No | pgserve port. Default: `15432` |
 | `GENIE_PG_AVAILABLE` | No | Set to `true` when running under Genie with managed Postgres |
 
 <Warning>
   Never commit API keys to your repository. Use `.env` files or your system's secret manager.
 </Warning>
+
+## Deployment modes
+
+Brain ships with an embedded Postgres (`pgserve`) so you don't need to provision a database. Which mode it runs in is chosen by the environment:
+
+| Mode | Trigger | Storage | When to use |
+|---|---|---|---|
+| **Ephemeral** | Neither `DATABASE_URL` nor `BRAIN_DATA_DIR` set | pgserve RAM-only | Tests, CI, exploration. State is discarded when the process exits. |
+| **Data-dir** | `BRAIN_DATA_DIR=/path` | pgserve persists to the local directory | Single-machine personal brain. Survives restarts. |
+| **Persistent** | `DATABASE_URL=postgres://…` | pgserve RAM + WAL sync to remote Postgres | Production, multi-agent, HA. Remote Postgres is the durable store; pgserve acts as a fast local cache. |
+
+All three modes use the same binary and the same CLI — only the environment changes. Switching between them is safe as long as the schema versions match (`brain update` handles migrations).
 
 ## Embedding Models
 
