@@ -1,0 +1,120 @@
+---
+title: "Backend services overview"
+description: "Ship a Bun service alongside your pack's frontend. NATS in, anything out."
+icon: "server"
+---
+
+A pack service is an optional backend your pack owns. It's a Bun process that the platform runs next to your frontend for as long as your pack is installed. You write it. You publish the image. The platform handles scheduling, networking, and lifecycle.
+
+Pure-frontend packs don't need a service. Reach for one when you need:
+
+- Long-running work that can't live in a React component
+- Integrations with external APIs from a trusted environment
+- Shared state across users in the same org
+- Anything that requires secrets the frontend must not see
+
+## File layout
+
+A minimal pack with a backend looks like this:
+
+```
+my-pack/
+├── khal-app.json
+├── package/             # frontend (React)
+│   └── src/
+└── service/             # backend (Bun)
+    ├── src/
+    │   └── index.ts     # entrypoint — opens NATS, serves HTTP
+    ├── Dockerfile       # container image for the service
+    ├── healthcheck.sh   # probe script used by the platform
+    ├── package.json
+    └── tsconfig.json
+```
+
+`pack-terminal` is the reference. Its service entrypoint is [`service/src/index.ts`](https://github.com/khal-os/pack-terminal/blob/main/service/src/index.ts) — a Bun process that connects to NATS, registers subject handlers, and also serves `/healthz` and `/readyz` on a local port.
+
+## Talking to the frontend
+
+NATS is the primary transport between your frontend and your service. Your frontend uses [`useNats`](/sdk/useNats) (or [`useService`](/sdk/useService)); your service uses the standard `nats` Node client.
+
+```ts
+// service/src/index.ts
+import { connect } from 'nats';
+
+const nc = await connect({ servers: process.env.KHAL_NATS_URL });
+const org = process.env.KHAL_ORG_ID ?? 'dev';
+
+nc.subscribe(`khal.${org}.my-pack.echo`, {
+  callback: (_err, msg) => {
+    msg.respond(msg.data); // echo back
+  },
+});
+```
+
+Subject convention: `khal.<orgId>.<packId>.<action>`. See [`pack-terminal/service/src/handlers/spawn.ts`](https://github.com/khal-os/pack-terminal/blob/main/service/src/handlers/spawn.ts) for a real spawn/input/output flow.
+
+## Talking to external APIs
+
+Your service is a regular Bun process. Use `fetch`, any npm client library, or raw TCP — whatever fits. Just pull credentials from environment variables, never from the frontend. See [environment config](/services/environment-config) for how secrets reach your service.
+
+```ts
+const resp = await fetch('https://api.example.com/v1/things', {
+  headers: { Authorization: `Bearer ${process.env.EXAMPLE_API_KEY}` },
+});
+```
+
+## Health checks
+
+The platform probes your service. Expose `/healthz` (liveness) and `/readyz` (readiness) over HTTP:
+
+```ts
+Bun.serve({
+  port: Number(process.env.PORT) || 8002,
+  fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname === '/healthz') return Response.json({ status: 'ok' });
+    if (url.pathname === '/readyz') {
+      return nc && !nc.isClosed()
+        ? Response.json({ status: 'ready' })
+        : Response.json({ status: 'not ready' }, { status: 503 });
+    }
+    return new Response('not found', { status: 404 });
+  },
+});
+```
+
+A shell-based TCP probe works too — `pack-terminal`'s [`healthcheck.sh`](https://github.com/khal-os/pack-terminal/blob/main/service/healthcheck.sh) just checks that the port is listening.
+
+## Lifecycle
+
+The platform runs your service alongside your pack's frontend, and terminates it when the pack is uninstalled. You don't manage pods, restart policies, or rollout — you just:
+
+1. Build a container image that runs your service.
+2. Publish it.
+3. Reference it from `khal-app.json`.
+
+The platform handles the rest.
+
+## Graceful shutdown
+
+Listen for `SIGTERM` and drain cleanly. NATS has a `drain()` method for flushing in-flight messages:
+
+```ts
+async function shutdown() {
+  try {
+    await nc.drain();
+  } catch {}
+  process.exit(0);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+```
+
+<Warning>
+  **Services should be stateless or externalize their state.** The platform may restart your service at any time. Persist anything you need to survive a restart to a database, object store, or a volume mounted through your manifest — never local disk inside the container. See [environment config](/services/environment-config) for how to wire secrets and connection strings.
+</Warning>
+
+## Full-stack pattern
+
+For an end-to-end example — frontend `useNats` subscribing to output from a backend NATS handler — read [`pack-terminal`'s source](https://github.com/khal-os/pack-terminal). The frontend hook [`useNatsPty`](https://github.com/khal-os/pack-terminal/blob/main/package/src/views/terminal/useNatsPty.ts) and the service's [`spawn` handler](https://github.com/khal-os/pack-terminal/blob/main/service/src/handlers/spawn.ts) together show the full request/event loop.
