@@ -1,79 +1,75 @@
 ---
 title: "Brain Overview"
-description: "Knowledge graph engine for AI agents — multimodal, self-enhancing, Obsidian-compatible"
+description: "A self-improving knowledge graph for AI agents. Generate → Reflect → Curate → Evolve."
 icon: "brain"
 ---
 
-Brain is a knowledge graph engine that gives AI agents persistent, searchable memory. It stores content as Obsidian-compatible markdown files on disk, indexes them into PostgreSQL with BM25 and vector search, and returns results ranked by confidence scores.
+Brain is a knowledge graph engine that gives AI agents persistent memory **that gets smarter with use.** It stores content as Obsidian-compatible markdown on disk, indexes it into PostgreSQL with hybrid BM25 + vector + trigram search, and closes the loop with autonomous optimization — reflecting on result quality, de-duplicating, re-linking, and tuning its own retrieval parameters. No other memory layer does that.
 
-## Key Features
+## What makes Brain different
 
 <CardGroup cols={2}>
-
-<Card title="Hybrid Search" icon="magnifying-glass">
-  Combines BM25 keyword search with vector similarity for high-precision retrieval. Results carry confidence scores — better 3 strong hits than 30 noisy ones.
-</Card>
-
-<Card title="Obsidian-Compatible" icon="vault">
-  Your brain vault is a folder of markdown files. Open it in Obsidian, edit with any text editor, or manage via the CLI. No lock-in.
-</Card>
-
-<Card title="Multimodal Embeddings" icon="images">
-  Uses Gemini Embedding 2 to embed text, images, and documents into a unified vector space. Search across modalities with a single query.
-</Card>
-
-<Card title="Self-Enhancing" icon="arrows-spin">
-  Built-in health checks, conflict detection, deduplication, and automatic link generation keep your knowledge graph clean as it grows.
-</Card>
-
+  <Card title="Closed-loop intelligence" icon="arrows-spin" href="/brain/auto-kb">
+    **Generate → Reflect → Curate → Evolve.** `brain auto-kb` runs a fully autonomous loop — searches, scores, finds duplicates, proposes new links, sweeps retrieval parameters, grades itself A–F. Your knowledge base improves while you sleep.
+  </Card>
+  <Card title="Knowledge graph, not just a vector store" icon="diagram-project" href="/brain/knowledge-graph">
+    Documents form a typed graph. `brain link` auto-generates tag-overlap + semantic links. `brain graph` reports orphans and components. `brain dedup` collapses near-duplicates with audit trails. Retrieval results are uplifted by graph proximity, not only embeddings.
+  </Card>
+  <Card title="Hybrid retrieval with authority" icon="magnifying-glass" href="/brain/search">
+    BM25 + pgvector + trigram in parallel, fused with Reciprocal Rank Fusion (k=60). Results weighted by source type, frontmatter confidence, and link-graph authority. Fewer strong hits over many noisy ones — by design.
+  </Card>
+  <Card title="Zero lock-in, zero assumed infra" icon="lock-open">
+    Your vault is just markdown — open in Obsidian, edit in vim, version in git. Brain ships with an embedded Postgres (`pgserve`), so you don't run a database. Ephemeral, local-disk, or synced-to-remote — one CLI, three modes.
+  </Card>
 </CardGroup>
 
-## How It Works
-
-Brain operates on two layers:
-
-1. **Filesystem (source of truth for content):** Markdown files with YAML frontmatter live in a vault directory. Each file is a document — organized into domains, decisions, reflections, and free-form notes.
-
-2. **PostgreSQL (source of truth for metadata and search):** Documents are chunked, embedded, and indexed. BM25 full-text search and pgvector cosine similarity run in Postgres. Strategy routing picks the best search approach per query.
+## Architecture, end to end
 
 ```
-┌─────────────────────────────────────────┐
-│  Vault (Obsidian-compatible markdown)   │
-│  brain/                                 │
-│  ├── domains/                           │
-│  ├── decisions/                         │
-│  ├── reflections/                       │
-│  ├── memory/                            │
-│  └── brain.json                         │
-└──────────────┬──────────────────────────┘
-               │ brain update --embed
-               ▼
-┌─────────────────────────────────────────┐
-│  PostgreSQL                             │
-│  ├── brain_documents (metadata, hash)   │
-│  ├── brain_chunks (text + tsvector)     │
-│  └── brain_embeddings (pgvector)        │
-└─────────────────────────────────────────┘
+Obsidian vault (filesystem)     Postgres (metadata + search)
+┌─────────────────────────┐     ┌──────────────────────────┐
+│  search/bm25.md         │     │  brain_documents          │
+│  graphs/links.md        │───> │  brain_chunks             │
+│  _domains/              │     │  brain_links              │
+│  _decisions/            │     │  brain_domains            │
+│  _reflections/          │     │  brain_strategy_segments  │
+│  brain.json             │     │  brain_observations       │
+└─────────────────────────┘     └──────────────────────────┘
+                                           │
+                                           v
+                         ┌────────────────────────────────────┐
+                         │  Retrieval: BM25 + vector + trigram │
+                         │  RRF fusion · link boost · authority │
+                         │  Domain routing · confidence gating  │
+                         └────────────────────────────────────┘
+                                           │
+                                           v
+                         ┌────────────────────────────────────┐
+                         │  Closed loop: auto-kb              │
+                         │  reflect · dedup · link · sweep    │
+                         │  score · decisions · evolve        │
+                         └────────────────────────────────────┘
 ```
 
-## Architecture
+The filesystem is the source of truth for content. Postgres is the source of truth for metadata, search indexes, and embeddings. `brain update` syncs filesystem to Postgres (hash-skips unchanged files). The closed loop writes its decisions and reflections *back* to the vault — not hidden in a database row.
 
-| Component | Role |
-|-----------|------|
-| **Vault** | Markdown files on disk — the canonical content store |
-| **Chunker** | Splits documents into overlapping chunks for search |
-| **Embedder** | Generates multimodal embeddings via Gemini |
-| **Indexer** | Writes chunks + embeddings to Postgres |
-| **Searcher** | Hybrid BM25 + vector search with confidence scoring |
-| **Strategy Router** | Picks the best search strategy per query type |
-| **Health Engine** | Monitors vault quality, detects conflicts and duplicates |
+## Command surface (grouped)
 
-## Brain Types
+| Group | Commands | Purpose |
+|---|---|---|
+| **Lifecycle** | `brain init` · `brain update` · `brain ingest` · `brain autoschema` · `brain serve` | Create vault, sync to Postgres, classify and organize, stand up a server |
+| **Query** | `brain search` · `brain get` · `brain analyze` | Hybrid search, fetch by path/id, LLM analysis via rlmx |
+| **Knowledge graph** | `brain link` · `brain graph` · `brain dedup` · `brain health` · `brain score` · `brain decisions` · `brain forget` | Generate links, audit structure, remove dupes, grade quality A–F |
+| **Intelligence** | `brain domain` · `brain reflect` · `brain strategy` · `brain sweep` · `brain auto-kb` | Route by knowledge area, reflect on quality, sweep params, self-optimize |
 
-Brain supports specialized vault templates for different use cases:
+See [Retrieval](/brain/search), [Closed-loop intelligence](/brain/auto-kb), and [Knowledge graph](/brain/knowledge-graph) for the deep dives.
+
+## Brain types (vault templates)
+
+Brain ships with specialized templates so the AI classifier (`brain autoschema`) knows where to put things:
 
 | Type | Purpose |
-|------|---------|
+|---|---|
 | `generic` | General-purpose knowledge base |
 | `engineering` | Codebase knowledge, architecture decisions |
 | `pm` | Product specs, roadmaps, stakeholder context |
@@ -82,20 +78,27 @@ Brain supports specialized vault templates for different use cases:
 | `ops` | Runbooks, incident history, infrastructure |
 | `personal` | Personal notes, learning journal |
 
-## Next Steps
+Pick one at `brain init` time — it seeds the domain set and the autoschema classifier's priors.
+
+## Deployment modes
+
+Brain is designed to run anywhere an agent runs — no external Postgres required for dev, but ready for production when you need it.
+
+| Mode | Trigger | Storage | Use case |
+|---|---|---|---|
+| **Ephemeral** | Neither env var set | pgserve RAM-only | Tests, CI, exploration |
+| **Data-dir** | `BRAIN_DATA_DIR=/path` | pgserve persists to disk | Single-machine personal brain |
+| **Persistent** | `DATABASE_URL=postgres://…` | pgserve RAM + WAL sync to remote Postgres | Production, multi-agent, HA |
+
+See [Configuration](/brain/configuration) for the full env-var reference.
+
+## What's next
 
 <CardGroup cols={2}>
-
-<Card title="Quickstart" icon="rocket" href="/brain/quickstart">
-  Install Brain, create your first vault, and run your first search.
-</Card>
-
-<Card title="Search Guide" icon="magnifying-glass" href="/brain/search">
-  Deep dive into BM25, vector, and hybrid search strategies.
-</Card>
-
-<Card title="Configuration" icon="gear" href="/brain/configuration">
-  Full reference for brain.json and environment variables.
-</Card>
-
+  <Card title="Quickstart" icon="rocket" href="/brain/quickstart">
+    Install, create a brain, run your first search in under 5 minutes.
+  </Card>
+  <Card title="Closed-loop intelligence" icon="arrows-spin" href="/brain/auto-kb">
+    The hero feature — how Brain improves itself without you.
+  </Card>
 </CardGroup>

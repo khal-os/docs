@@ -1,0 +1,169 @@
+---
+title: "Knowledge graph operations"
+description: "Link, graph, dedup, health, score, forget — the graph operations that make Brain a knowledge graph, not just a vector store."
+icon: "diagram-project"
+---
+
+Brain treats your vault as a **typed knowledge graph**, not a bag of chunks. Documents have types (note, decision, domain, reflection, observation), links have types (semantic, tag-overlap, derived-from), and every retrieval result is uplifted by its position in that graph. This page covers the operations you use to build, maintain, and grade the graph.
+
+## Link generation
+
+`brain link` proposes links automatically from two signals:
+
+1. **Tag overlap** — documents sharing 2+ tags are candidate links.
+2. **Semantic similarity** — documents with cosine similarity above threshold are candidate links.
+
+```bash
+brain link --brain my-brain
+```
+
+Links are stored in the `brain_links` table with a link type and a confidence score, and also materialized back into the markdown files as wiki-style `[[document]]` references (opt-in via `--apply`). Obsidian users get free bidirectional navigation; git users get a diff of which links were added.
+
+<Note>
+Link generation is the single biggest driver of retrieval quality over time. A 500-doc vault with dense linking beats a 5,000-doc vault with no graph structure.
+</Note>
+
+### Link boost in retrieval
+
+At query time, the retrieval pipeline runs a link-boost pass over the top-N results. For each hit, it uplifts any linked document's score by **+0.15**, capped at **+0.45 total** per document. This means a weak match that's linked to a strong match gets pulled into the result set — mimicking how a human researcher follows citations.
+
+See [Retrieval](/brain/search#link-boost) for the scoring detail.
+
+## Graph analysis
+
+`brain graph` reports the structural health of the graph:
+
+```bash
+brain graph --brain my-brain
+```
+
+Outputs:
+
+- **Orphans** — documents with zero in-links. Candidates for deletion or re-linking.
+- **Connected components** — isolated subgraphs. Often indicates unrelated topics should be split into separate brains.
+- **Link-degree distribution** — hub-and-spoke vs. mesh structure.
+- **Authority scores** — PageRank-style scoring over the link graph.
+
+<Warning>
+A brain with more than ~15% orphans is a sign the vault has lost coherence. Either run `brain link` to repair, or `brain forget` the orphans.
+</Warning>
+
+## Deduplication
+
+`brain dedup` finds near-duplicate documents — the copy-paste-from-Slack pattern that silently bloats vector stores:
+
+```bash
+brain dedup --brain my-brain --threshold 0.85
+```
+
+Output:
+
+- Groups of documents with ≥85% semantic similarity.
+- For each group: canonical pick (most-linked, highest-authority), and the others flagged for merge or deletion.
+- **Audit trail** written to `_reflections/dedup-<date>.md` so you can review before applying.
+
+Apply a dedup decision explicitly:
+
+```bash
+brain dedup --brain my-brain --apply --keep <doc-id> --remove <doc-id-2>,<doc-id-3>
+```
+
+## Health checks
+
+`brain health` lints the vault and reports structural issues:
+
+```bash
+brain health --brain my-brain
+```
+
+Checks include:
+
+- Missing embeddings (content changed but not re-embedded).
+- Stale chunks (chunk config changed since ingest).
+- Broken `[[links]]` (target doc removed or renamed).
+- Frontmatter contract violations (e.g., document declares `confidence: high` but has no sources).
+- Empty or under-populated domains.
+
+Run `brain health --fix` to apply the auto-fixable subset (re-embed, re-chunk, repair obvious link typos).
+
+## Quality scoring
+
+`brain score` returns a 4-dimension quality grade (A–F):
+
+```bash
+brain score --brain my-brain
+```
+
+The four dimensions:
+
+| Dimension | What it measures |
+|---|---|
+| **Content** | Coverage (domain breadth), depth (avg. doc length, citations), freshness (staleness of top docs) |
+| **Structure** | Link density, orphan percentage, domain balance |
+| **Retrieval** | Sweep-grade against the seeded question set — does search actually find the right docs? |
+| **Hygiene** | Dedup debt, health-check pass rate, frontmatter-contract compliance |
+
+A brain graded `B-` on retrieval but `A` on content is telling you: "your content is great, but your retrieval config doesn't find it." Run `brain sweep` next.
+
+## Decisions
+
+`brain decisions` surfaces, edits, and applies strategy decisions recorded over time:
+
+```bash
+# List recorded decisions
+brain decisions list --brain my-brain
+
+# Show a specific decision
+brain decisions show --brain my-brain --id 2026-04-17-strategy-segment-code-queries
+
+# Apply a decision (e.g., after rolling it back)
+brain decisions apply --brain my-brain --id <id>
+```
+
+Decisions are markdown files under `_decisions/` — auditable, diff-able, git-commitable. `brain auto-kb` writes to this directory automatically; you can edit the files by hand and `brain decisions apply` to re-materialize the config.
+
+## Forgetting
+
+`brain forget` removes documents with a full audit trail:
+
+```bash
+brain forget --brain my-brain --id <doc-id> --reason "outdated — superseded by <other-id>"
+```
+
+Forgotten docs are:
+
+- Removed from `brain_documents`, `brain_chunks`, and `brain_links`.
+- Logged to `_reflections/forget-<date>.md` with the reason and the content hash (so you can re-ingest if you change your mind).
+- Their outbound links re-scored against remaining docs.
+
+## A weekly graph-ops loop
+
+For a brain that's used actively but not via `auto-kb`:
+
+<Steps>
+  <Step title="Monday: brain health + fix auto-fixable">
+    `brain health --fix --brain my-brain` — keeps embeddings and chunks current.
+  </Step>
+  <Step title="Wednesday: link pass">
+    `brain link --brain my-brain --apply` — new content accumulated since last link run gets integrated.
+  </Step>
+  <Step title="Friday: dedup + forget review">
+    `brain dedup --brain my-brain --threshold 0.85` — read the audit, apply the merges you agree with.
+  </Step>
+  <Step title="End of week: score">
+    `brain score --brain my-brain` — if anything dropped a grade, the next week starts with a sweep.
+  </Step>
+</Steps>
+
+Most users skip the manual loop and run `brain auto-kb --rounds 1` once a week instead.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Closed-loop intelligence" icon="arrows-spin" href="/brain/auto-kb">
+    The one-command autonomous version of everything on this page.
+  </Card>
+  <Card title="Retrieval" icon="magnifying-glass" href="/brain/search">
+    How the graph operations above lift retrieval quality at query time.
+  </Card>
+</CardGroup>
