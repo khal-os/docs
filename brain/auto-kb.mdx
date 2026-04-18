@@ -1,0 +1,132 @@
+---
+title: "Closed-loop intelligence"
+description: "brain auto-kb — autonomous Generate → Reflect → Curate → Evolve loop. The feature that makes Brain different from every other vector store."
+icon: "arrows-spin"
+---
+
+Most knowledge systems are write-once: you dump content in, you query it out, it degrades silently as it grows. Brain is different — it runs a **closed loop** that continuously measures, cleans, links, and tunes itself. The entry point is a single command: `brain auto-kb`.
+
+## The ACE pattern
+
+Brain implements the **Autonomous Context Engineering** pattern adapted from recent agent research:
+
+```
+Generate ──▶ Reflect ──▶ Curate ──▶ Evolve ──▶ (loop)
+```
+
+| Phase | What happens | Commands involved |
+|---|---|---|
+| **Generate** | Search with confidence scoring, authority weights, link boost | `brain search`, `brain analyze` |
+| **Reflect** | Mark results helpful / harmful, update source reputation, track search quality per domain | `brain reflect` |
+| **Curate** | Domain routing, semantic dedup, health scoring, auto-link generation | `brain dedup`, `brain link`, `brain health` |
+| **Evolve** | Parameter sweeps, strategy segment tuning, graph-structure analysis | `brain sweep`, `brain strategy`, `brain graph` |
+
+Each phase writes back to the brain vault as markdown under `_reflections/`, `_decisions/`, and `_domains/` — so everything the optimizer learns is auditable and portable. Nothing is hidden in a database row.
+
+## Running it
+
+The one-liner is the autonomous loop:
+
+```bash
+brain auto-kb --brain my-brain --rounds 3
+```
+
+That runs 3 rounds of ACE: generate (search with a seeded question set) → reflect (grade the answers) → curate (dedup, relink, health-fix) → evolve (sweep retrieval params, persist the winning strategy). Every round produces a markdown audit trail in your vault.
+
+### What auto-kb actually does per round
+
+<Steps>
+  <Step title="Probes retrieval with a curated question set">
+    Either the defaults shipped with Brain, or a list you provide via `--questions questions.md`.
+  </Step>
+  <Step title="Scores every answer against authority + confidence">
+    4-dimension quality grade per question. Bad answers flagged for follow-up curation.
+  </Step>
+  <Step title="Curates the vault">
+    - `brain dedup --threshold 0.85` — collapse near-duplicates (with audit).
+    - `brain link` — generate tag-overlap and semantic links; boost graph connectivity.
+    - `brain health` — lint the vault, fix obvious issues, re-embed stale chunks.
+  </Step>
+  <Step title="Sweeps retrieval parameters">
+    Grid search over RRF `k`, link-boost cap, source-type weights; picks the setting that wins against the question set.
+  </Step>
+  <Step title="Persists decisions">
+    The winning strategy is saved to `_decisions/` and applied via `brain strategy set`. Rolled back automatically if the next round regresses.
+  </Step>
+</Steps>
+
+## The individual commands
+
+If you want to drive the loop manually instead of via `auto-kb`, each phase has its own command:
+
+<CodeGroup>
+```bash Reflect on recent searches
+brain reflect --brain my-brain
+# Flags results helpful/harmful, updates source reputation
+```
+
+```bash Find near-duplicates
+brain dedup --brain my-brain --threshold 0.85
+# Groups docs with >85% semantic overlap, emits audit for review
+```
+
+```bash Generate links
+brain link --brain my-brain
+# Tag-overlap + semantic-similarity link proposals
+```
+
+```bash Analyze graph structure
+brain graph --brain my-brain
+# Orphans, connected components, link-degree distribution
+```
+
+```bash Grade quality A–F
+brain score --brain my-brain
+# 4-dimension grade across content, structure, retrieval, hygiene
+```
+
+```bash Parameter sweep
+brain sweep --brain my-brain --questions 20
+# Grid-search retrieval config against a held-out question set
+```
+</CodeGroup>
+
+## Why this matters
+
+Most "agent memory" solutions are vector stores with a nice wrapper. They grow; they don't improve. After six months you have 40,000 chunks and no sense of which ones are actually useful.
+
+Brain's closed loop gives you:
+
+- **A quality floor.** `brain score` returns a grade. If it drops, you know before your agent starts giving bad answers.
+- **Self-pruning.** `brain dedup` catches the copy-paste-from-Slack patterns that bloat vector stores.
+- **Link uplift.** `brain link` uplifts search scores for docs that relate to confirmed-good answers — so the good stuff stays findable as the vault grows.
+- **Tuning without guessing.** `brain sweep` replaces "is k=60 the right RRF constant?" with an empirical answer against your actual content and questions.
+
+## Audit trail
+
+Everything `auto-kb` does lands in the vault:
+
+```
+my-brain/
+├── _decisions/
+│   └── 2026-04-17-strategy-segment-code-queries.md    ← winning sweep
+├── _reflections/
+│   └── 2026-04-17-run-42.md                           ← question set + grades
+├── _domains/
+│   └── code.md                                         ← routing config
+└── logs/
+    └── auto-kb-2026-04-17.md                          ← run summary
+```
+
+You can open any of these in Obsidian, review what changed, roll back by reverting the markdown file, and commit the next run to git. The optimizer is not a black box — it writes its reasoning down.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Knowledge graph operations" icon="diagram-project" href="/brain/knowledge-graph">
+    The graph ops that make the closed loop possible — link, dedup, health, score.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/brain/configuration">
+    Deployment modes, env vars, and the `brain.json` strategy block.
+  </Card>
+</CardGroup>
