@@ -1,12 +1,12 @@
 # Screenshot capture manifest — Khal-OS docs
 
-Every `<Frame>` in the Khal-OS docs site renders a placeholder until the image it references is captured and added under `/images/`. This manifest lists every shot the docs currently point at, where to capture it from (`nmstx.khal.ai` unless noted), and a crisp caption brief.
+Every `<Frame>` in the Khal-OS docs site renders a placeholder until the image it references is captured and added under `/images/`. This manifest lists every shot the docs currently point at, where to capture it from (any production-equivalent KhalOS instance), and a crisp caption brief.
 
 Update this file in lock-step when you add / remove `<Frame>` calls — if an operator opens a random `.mdx` and sees a placeholder image that isn't listed here, that's a drift bug.
 
 ## How to use this file
 
-1. Log into `nmstx.khal.ai` with a test account that has at least one pack installed.
+1. Log into a production-equivalent KhalOS instance with a test account that has at least one pack installed.
 2. For each entry, set up the scene described in "Setup", capture the region described in "Shot", and save at the path listed under "Save as".
 3. PNG, 2x pixel density where possible. Tight crops — no browser chrome unless the shot is about the shell itself.
 4. Open a PR targeting `dev` titled `docs(khal-os): capture screenshots — <batch>` and attach the captures.
@@ -30,7 +30,7 @@ Update this file in lock-step when you add / remove `<Frame>` calls — if an op
 
 | Save as | Used in | Setup | Shot |
 |---|---|---|---|
-| `images/pack-settings-preview.png` | `patterns/frontend-only-pack.mdx` | Install `pack-settings` into `nmstx.khal.ai` | `pack-settings` window open with the user profile rendered |
+| `images/pack-settings-preview.png` | `patterns/frontend-only-pack.mdx` | Install `pack-settings` into a test KhalOS instance | `pack-settings` window open with the user profile rendered |
 | `images/pack-terminal-preview.png` | `patterns/full-stack-pack.mdx` | Install `pack-terminal`; open it; type a few commands (`ls`, `uname -a`) | `pack-terminal` window with an active PTY session showing output |
 
 ### Dev + testing
