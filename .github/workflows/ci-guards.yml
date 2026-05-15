@@ -70,3 +70,22 @@ jobs:
             exit 1
           fi
           echo "✓ CLAUDE.md + .claude/rules/identity.md present"
+
+  stale-scaffold-refs:
+    name: No stale gh repo create --template references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject 'gh repo create --template khal-os/pack-template' in authored docs
+        run: |
+          set -e
+          # Authored user-facing docs only. Excludes .genie/ (historical wish/brainstorm artifacts).
+          if grep -rnE "gh repo create --template khal-os/pack-template" \
+              --include="*.md" --include="*.mdx" \
+              --exclude-dir=".genie" \
+              --exclude-dir="node_modules" \
+              .; then
+            echo "::error::Stale scaffold reference found. Replace with 'khal new app <name>' (from @khal-os/app-kit)."
+            exit 1
+          fi
+          echo "✓ No stale 'gh repo create --template khal-os/pack-template' references in authored docs"
