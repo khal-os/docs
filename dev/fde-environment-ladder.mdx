@@ -1,0 +1,111 @@
+---
+title: 'FDE environment ladder'
+description: 'How Full-stack Developer Experience engineers move a KhalOS app from local proof to shared dev, customer dev, and production.'
+---
+
+This page is the operating contract for FDE onboarding. The first rule is simple:
+
+<Callout type="warning">
+  **Test local first.** A change is not ready for shared environments until the FDE can run it in the local loop, understand what is happening, and collect evidence from the CLI.
+</Callout>
+
+KhalOS has multiple environment rungs. Do not collapse them into one `dev` bucket. Each rung has a different purpose, mutation policy, and proof bar.
+
+## The ladder
+
+| Step | Target name | Who uses it | Runtime shape | Purpose | Promotion gate |
+|------|-------------|-------------|---------------|---------|----------------|
+| 1 | `local` / `dev-local` | Every FDE on their own machine | PM2-native local loop from `repos/deploy/dev-local` | Build intuition, test quickly, debug without blocking anyone else | App works locally, manifest/env contract is valid, logs explain failures |
+| 1a | mirrored `dev-local` | Agents and maintainers | Same PM2-native loop, mirrored on the remote code host over SSH | Keep the agent/control server light while still dogfooding the same local loop | Same as local, with explicit note that it is a mirror, not shared k8s |
+| 2 | shared `dev` | All FDEs after local validation | Local Kind/k8s dev server from the deploy repo | Train in the shared cluster-like environment and catch integration issues | Local proof exists; shared deploy succeeds; app is observable and reversible |
+| 3 | customer dev / HML | Client-facing validation, currently Hapvida paths | Customer-scoped k3s or OCI/HML depending on target | Validate customer-specific settings, secrets, networking, and acceptance flow | Explicit customer/stakeholder gate and redacted evidence |
+| 4 | production | Operators only | OCI/OKE production | Stable customer operation | HML/stakeholder approval plus rollback plan |
+
+## Step 1 — local first
+
+For human FDEs, `local` means their own workstation. The shape should mirror the deploy repo's `dev-local` loop:
+
+```bash
+cd repos/deploy
+make dev-local
+```
+
+That target is the Tier-1 local loop. It bootstraps env, builds/stages packs, starts KhalOS processes under PM2, and wires local/Tailscale access where available.
+
+A good FDE local proof includes:
+
+- the app repo branch/ref being tested;
+- `khal-app.json` manifest validation;
+- declared `env[]` settings, without committed secret values;
+- build/typecheck output;
+- a running shell or app surface;
+- exact logs or status output if anything fails.
+
+<Note>
+  App repositories declare settings schema. Real values are supplied through KhalOS App Settings for the selected target. Do not commit customer secrets or concrete local credentials into app repos.
+</Note>
+
+## Step 1a — mirrored dev-local for agents
+
+When an agent is acting as the FDE companion, it may not run the full local loop on the Hermes/control server. Instead, the agent mirrors the same `dev-local` behavior on the remote code host over SSH.
+
+This is still **dev-local semantics**: PM2, local state, fast iteration, and FDE-style logs. It is not the shared k8s dev environment.
+
+The mirror exists to avoid bloating the agent-only control server while allowing the agent to dogfood the same commands and collect evidence alongside the engineer.
+
+## Step 2 — shared dev after local validation
+
+After local validation, promote to the shared local k8s/Kind dev server. This is where all FDEs train against the cluster-like integration environment.
+
+From the deploy repo, the current shared dev path is represented by:
+
+```bash
+cd repos/deploy
+make dev
+```
+
+This path performs the k8s-oriented deploy flow: preflight, build, image load/import, Helm upgrade, and rollout status. It is intentionally a second step. Do not use shared dev to discover basic local errors.
+
+## Step 3 — customer dev / HML
+
+Customer-specific environments are stronger gates. For Hapvida dev k3s, the deploy repo exposes a remote k3s path through the `hapvida-dev` SSH alias. HML/OCI paths may use different kubeconfigs and stronger access policy.
+
+At this rung, an FDE should be able to explain:
+
+- which client/customer is being touched;
+- which secrets/settings were supplied through App Settings or the platform secret store;
+- what changed versus shared dev;
+- who can approve the next promotion.
+
+## What `khal deploy` should make obvious
+
+The CLI should behave like a Vercel-style deploy companion, but with explicit environment identity:
+
+```bash
+khal deploy https://github.com/<org>/<app-repo> --branch <branch> --target local
+khal deploy https://github.com/<org>/<app-repo> --branch <branch> --target dev
+```
+
+Before mutating anything, the CLI should print:
+
+- target name and resolved rung (`local`, mirrored `dev-local`, shared k8s `dev`, customer dev/HML, prod);
+- host or control plane it will contact;
+- runtime mechanism (PM2 local loop, Kind/k8s, k3s, OCI/OKE);
+- app manifest identity;
+- env/settings requirements;
+- mutation policy;
+- exact follow-up commands for logs, status, open, rollback, and evidence.
+
+If the CLI cannot resolve those facts, it should stop and tell the FDE what to configure instead of guessing.
+
+## FDE pal responsibility
+
+KhalDX owns this experience with the platform team: the CLI, docs, and examples must teach the FDE what to do next at every failure point. A great onboarding loop feels like pairing with an engineer who knows the environment ladder and can say:
+
+- where you are;
+- what is safe to mutate;
+- what evidence proves the step worked;
+- what command to run next;
+- when to ask for platform/operator help.
+
+This page is the contract those tools and guides should converge on.
