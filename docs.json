@@ -86,6 +86,7 @@
             "group": "Dev",
             "pages": [
               "dev/fde-environment-ladder",
+              "dev/gitea-source-control",
               "dev/local-dev-and-testing"
             ]
           },
@@ -148,10 +149,6 @@
         ]
       }
     ]
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "links": [
