@@ -1,0 +1,83 @@
+---
+title: "Source control for KHAL teams"
+description: "How public GitHub docs and private KHAL engineering repositories fit together without widening the docs deployment security boundary."
+---
+
+KHAL uses two source-control surfaces intentionally:
+
+- **Public GitHub repositories** for public documentation, public examples, and services that must integrate with public SaaS tools.
+- **Private KHAL Gitea** for internal product engineering, private packs, platform work, and day-to-day team collaboration.
+
+This split is a security boundary, not a temporary accident. Public docs should stay easy to publish and safe to expose; private engineering work should stay behind KHAL-controlled access.
+
+<Callout type="warning">
+  Keep Mintlify connected to the public docs repository. Do **not** point Mintlify at private KHAL Gitea or grant docs tooling access to private engineering repos.
+</Callout>
+
+## Public docs stay on GitHub + Mintlify
+
+The public FDE manual is published from the public docs repository and served by Mintlify at `docs.khal.ai`.
+
+Use this path for changes to the public manual:
+
+1. Edit the docs repository.
+2. Open a normal docs pull request.
+3. Let the existing Mintlify integration publish after merge.
+
+Do not move docs hosting to a custom Vercel project just to add FDE content. Mintlify already owns the docs publishing path and is the right tool for this surface.
+
+## Private engineering work uses KHAL Gitea
+
+If you are working on private KHAL source code, use the internal Gitea host and credentials provided during onboarding. Do not paste private host tokens into docs, screenshots, logs, issues, or examples.
+
+A typical workstation check looks like this:
+
+```bash
+tea login list
+tea whoami
+```
+
+Then clone the private repository URL from the internal Gitea UI or team onboarding note.
+
+```bash
+git clone <private-khal-gitea-repo-url>
+cd <repo>
+```
+
+For HTTPS remotes, use your configured credential helper. For SSH remotes, register your SSH key in the internal Gitea UI before cloning.
+
+## Public examples must not leak private topology
+
+When documenting a workflow publicly:
+
+- use public GitHub URLs for public docs/examples;
+- use placeholders such as `<private-khal-gitea-repo-url>` for private repos;
+- never include tokens, credential-helper output, private org inventories, admin usernames, internal IPs, or migration/cutover notes;
+- do not claim a mirror or internal checkout is the source of truth unless the repo owner has explicitly cut it over.
+
+<Callout type="info">
+  Some internal repositories may be mirrored while the team transitions tools. A mirror is not automatically the writable source of truth. Follow the repo owner's current onboarding note for the authoritative remote.
+</Callout>
+
+## Smoke test without exposing secrets
+
+For an internal repository, a safe clone smoke test records only non-secret evidence:
+
+```bash
+git remote -v
+git status --short --branch
+git log -1 --oneline
+```
+
+When sharing evidence in public docs or public issues, redact private remote URLs if they reveal internal topology. A good public summary says what was validated without publishing credentials or private inventory.
+
+## Quick decision table
+
+| Work surface | Source control | Deploy/publish path |
+| --- | --- | --- |
+| Public docs and FDE manual | Public GitHub docs repo | Mintlify |
+| Public example code | Public GitHub repo | GitHub + normal public CI |
+| Private KHAL platform/app work | Internal KHAL Gitea | Internal CI/deploy path for that repo |
+| Temporary mirrored checkout | Mirror/transport only | Not a source-of-truth change by itself |
+
+The rule of thumb: keep public docs public and boring; keep private source private and access-controlled.

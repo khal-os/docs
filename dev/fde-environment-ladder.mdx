@@ -53,6 +53,17 @@ This is still **dev-local semantics**: PM2, local state, fast iteration, and FDE
 
 The mirror exists to avoid bloating the agent-only control server while allowing the agent to dogfood the same commands and collect evidence alongside the engineer.
 
+### Gitea mirror guardrails
+
+The remote code host mirror may be backed by Gitea. Treat that mirror as a transport and execution surface for agents, not as a replacement source of truth for the public docs or app repositories. Do not detach the GitHub/Mintlify deployment path when using Gitea-hosted working copies; record which upstream ref was mirrored, which Gitea ref was exercised, and how to reproduce the same command on a human workstation.
+
+A good Gitea mirror proof includes:
+
+- upstream GitHub repo and commit/ref;
+- Gitea mirror URL or remote name, without credentials;
+- agent host or SSH alias used to run the mirrored `dev-local` loop;
+- evidence that the mirrored run used the same manifest/env contract as local FDE work.
+
 ## Step 2 — shared dev after local validation
 
 After local validation, promote to the shared local k8s/Kind dev server. This is where all FDEs train against the cluster-like integration environment.
