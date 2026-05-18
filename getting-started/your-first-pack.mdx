@@ -9,7 +9,27 @@ A pack is a self-contained KhalOS app: a frontend React package plus an optional
   This page is the fast path. For the full pack contract — every manifest field, every CI workflow, every deploy mode — follow the **Next steps** links at the bottom.
 </Callout>
 
-## 1. Scaffold with `khal new`
+## 1. Install and verify the `khal` CLI
+
+`@khal-os/app-kit` ships the `khal` command used throughout this guide. Until the auth-fixed CLI is promoted from npm `next` to `latest`, fresh FDE workstations must install the documented release channel explicitly:
+
+```bash
+npm install -g @khal-os/app-kit@next
+khal --version
+```
+
+If you are connecting to a KhalOS instance from a headless shell, verify the auth surface before you scaffold or install packs:
+
+```bash
+khal login --no-browser --instance http://localhost:8888
+khal auth status
+khal whoami
+khal auth logout
+```
+
+Replace `http://localhost:8888` with your assigned instance URL when you are not using a local dev instance. Do not paste the login URL, device code, or token output into tickets, docs, or chat.
+
+## 2. Scaffold with `khal new`
 
 `@khal-os/app-kit` ships a `khal new` command that stamps out a complete pack locally. It bundles three templates — `app` (full-stack), `service` (backend-only), and `workflow` (Temporal) — and emits a runnable project with no network calls.
 
@@ -36,7 +56,7 @@ Replace `<name>` with your pack's identifier — lowercase, hyphen-separated, an
   The legacy GitHub-template path (using `gh repo create` against the deprecated `pack-template` repo) no longer applies. Existing packs scaffolded that way keep working unchanged — only **new** scaffolds should use `khal new`.
 </Callout>
 
-## 2. Edit the React component
+## 3. Edit the React component
 
 The frontend lives in `package/src/index.tsx` and must **default-export** a React component. That's the only contract — any hook, any styling, any UI library. Start with something that proves the full loop works:
 
@@ -58,7 +78,7 @@ export default function Pack() {
 
 The shell hosts your component inside a window. React state, effects, and context all work as you'd expect.
 
-## 3. (Optional) edit the service
+## 4. (Optional) edit the service
 
 If your pack needs a backend — a long-running process, a NATS subscriber, a side-effectful endpoint — edit `service/src/index.ts`. The `app` template ships a Bun HTTP server with a sample NATS subscription.
 
@@ -68,7 +88,7 @@ If your pack is **frontend-only**, delete the `service/` directory and remove th
   **Authoring ≠ deployment.** You declare what your pack needs in `khal-app.json` (permissions, service shape, env vars, `requires.postgres`, `requires.nats.streams`, `requires.temporal.namespace`). The platform provides the runtime — NATS connections, secrets, networking, provisioned resources. You never wire up infrastructure yourself.
 </Callout>
 
-## 4. Build and typecheck
+## 5. Build and typecheck
 
 ```bash
 bun install
@@ -82,7 +102,7 @@ bun run typecheck
   ![Terminal showing bun run build output with dist artifacts listed, followed by a green bun run typecheck summary.](/images/getting-started/bun-build-success.png)
 </Frame>
 
-## 5. See it in the shell
+## 6. See it in the shell
 
 You've got two paths to render your pack in a live shell:
 
