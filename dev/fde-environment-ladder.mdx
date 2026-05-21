@@ -21,6 +21,18 @@ KhalOS has multiple environment rungs. Do not collapse them into one `dev` bucke
 | 3 | customer dev / HML | Client-facing validation, currently Hapvida paths | Customer-scoped k3s or OCI/HML depending on target | Validate customer-specific settings, secrets, networking, and acceptance flow | Explicit customer/stakeholder gate and redacted evidence |
 | 4 | production | Operators only | OCI/OKE production | Stable customer operation | HML/stakeholder approval plus rollback plan |
 
+## CLI checkpoint at each rung
+
+Use the same CLI shape at every rung; only the target changes:
+
+```bash
+khal context --target dev --text
+khal doctor --target dev
+khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared --dry-run --json
+```
+
+The FDE should not mutate a shared or customer target until the dry-run is clean and the target identity is obvious. For first-run install/login/scaffold commands, see [FDE CLI quickstart](/dev/fde-cli-quickstart).
+
 ## Step 1 — local first
 
 For human FDEs, `local` means their own workstation. The shape should mirror the deploy repo's `dev-local` loop:

@@ -85,6 +85,7 @@
           {
             "group": "Dev",
             "pages": [
+              "dev/fde-cli-quickstart",
               "dev/fde-environment-ladder",
               "dev/gitea-source-control",
               "dev/local-dev-and-testing"
