@@ -20,7 +20,7 @@ Every pack manifest must declare these fields. The build will fail if any are mi
 | `permissions` | `string[]` | The capabilities the pack needs (`nats:publish`, `files:read`, etc.). Declare the minimum — the platform enforces the list at runtime. |
 
 <Callout type="info">
-  For a pack with a single frontend view (the common case), you'll also set `frontend.package` to the npm name your pack publishes. It's technically optional in the schema because bundle packs use `apps[]` instead — but you'll include it in 95% of packs.
+  Older manifests may include `frontend.package`. New generated apps are git-native: the install source is the repo/ref plus `khal-app.json`, and the platform build/install path resolves the frontend bundle from the repo instead of an app npm package.
 </Callout>
 
 ## Optional fields
@@ -29,11 +29,11 @@ These fields unlock additional pack shapes. You only declare what your pack need
 
 | Field | When to use it |
 |---|---|
-| `frontend.package` | The npm package your pack publishes (`@khal-os/pack-<name>`). Required for single-app packs. |
+| `frontend` | Legacy/shell frontend declaration. New app installs are git-native and should not require publishing an app npm package. |
 | `services[]` | Declare long-running processes your pack runs. Each entry names a process, its entry point, health check, and ports. |
 | `windows[]` | Default window sizes and titles for the shell. Override per-view dimensions here. |
 | `backend` | For packs that ship a container image — names the image, Helm chart, env vars, and ports. |
-| `apps[]` | For **bundle packs** that ship multiple frontend apps in one repo. Each entry has its own `id`, `name`, and `frontend.package`. When present, the root `frontend` is ignored. |
+| `apps[]` | For **bundle packs** that ship multiple frontend apps in one repo. Each entry has its own `id`, `name`, and frontend declaration. When present, the root `frontend` is ignored. |
 | `sandbox` | For packs that require a per-user container on install. Declares CPU, memory, and volume mounts. |
 
 Every optional field has a deep dive in the exhaustive [khal-app.json schema reference](/reference/khal-app-json-schema) — bookmark it when you start declaring services or sandboxes.
@@ -42,7 +42,7 @@ Every optional field has a deep dive in the exhaustive [khal-app.json schema ref
 
 <Tabs>
   <Tab title="Frontend-only">
-    The minimum viable manifest — what you get from `pack-template` after renaming. No backend, no services, one frontend package.
+    A minimum viable manifest for a frontend-only app. No backend, no services, one frontend surface.
 
     ```json khal-app.json
     {
@@ -54,17 +54,19 @@ Every optional field has a deep dive in the exhaustive [khal-app.json schema ref
       "description": "A KhalOS pack",
       "author": "KhalOS Core Team",
       "permissions": [],
-      "frontend": {
-        "package": "@khal-os/pack-<name>"
+      "kind": "app",
+      "requires": {
+        "postgres": true,
+        "nats": { "streams": ["<name>"] }
       }
     }
     ```
 
-    Source: the scaffold in `pack-template`.
+    Source: current `khal new app` scaffolds; exact optional fields may evolve with `@khal-os/types`.
   </Tab>
 
   <Tab title="Full-stack">
-    A pack with both a frontend package and a backend service image. The `permissions` list names the capabilities the pack uses; the `backend` block points the platform at the container image and chart.
+    A pack with a frontend surface and a backend service image. The `permissions` list names the capabilities the pack uses; the `backend` block points the platform at the container image and chart.
 
     ```json khal-app.json
     {
@@ -76,9 +78,7 @@ Every optional field has a deep dive in the exhaustive [khal-app.json schema ref
       "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
       "author": "KhalOS Core Team",
       "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
-      "frontend": {
-        "package": "@khal-os/pack-terminal"
-      },
+
       "backend": {
         "image": "ghcr.io/khal-os/pack-terminal-service",
         "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
@@ -96,7 +96,7 @@ Every optional field has a deep dive in the exhaustive [khal-app.json schema ref
 </Tabs>
 
 <Frame>
-  ![Annotated khal-app.json with arrows from each field to the runtime component it configures — id to launcher, permissions to capability gate, frontend.package to the shell loader, backend to the Kubernetes workload.](/images/packs/khal-app-json-annotated.png)
+  ![Annotated khal-app.json with arrows from each field to the runtime component it configures — id to launcher, permissions to capability gate, app kind to shell loading, backend to the Kubernetes workload.](/images/packs/khal-app-json-annotated.png)
 </Frame>
 
 ## Permissions: declare the minimum

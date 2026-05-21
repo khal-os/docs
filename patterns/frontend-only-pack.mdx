@@ -34,7 +34,7 @@ pack-settings/
 ├── package/
 │   ├── src/index.tsx     # Default export: a React component
 │   ├── tsup.config.ts    # CJS + ESM + .d.ts build
-│   └── package.json      # Publishes @khal-os/pack-settings
+│   └── package.json      # Frontend build metadata
 ├── package.json          # Workspace root
 └── .github/workflows/    # CI + npm publish
 ```
@@ -54,9 +54,8 @@ No `service/`. No `helm/`. No `Dockerfile`. The pack lives entirely in the brows
   "description": "User preferences and workspace settings",
   "author": "KhalOS Core Team",
   "permissions": ["user:read", "user:update"],
-  "frontend": {
-    "package": "@khal-os/pack-settings"
-  }
+  "kind": "app",
+  "requires": {}
 }
 ```
 </CodeGroup>
@@ -95,13 +94,13 @@ The SDK does not expose a `signOut` method — sign-out is a desktop-shell conce
 
 <Steps>
   <Step title="Push to dev">
-    CI publishes `@khal-os/pack-settings@next` to GitHub Packages.
+    CI validates the app repo and records the reviewed git ref; no frontend npm package is published.
   </Step>
   <Step title="Merge to main">
     CI publishes `@latest`. No Docker step; no Helm step.
   </Step>
   <Step title="Install into an instance">
-    A customer admin adds `@khal-os/pack-settings@latest` through their platform's install flow. The shell loads the npm package on next launch.
+    A customer admin installs the reviewed git ref through the platform install flow. The shell loads the built frontend bundle on next launch.
   </Step>
 </Steps>
 

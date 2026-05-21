@@ -54,9 +54,7 @@ pack-terminal/
   "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
   "author": "KhalOS Core Team",
   "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
-  "frontend": {
-    "package": "@khal-os/pack-terminal"
-  },
+  "kind": "app",
   "backend": {
     "image": "ghcr.io/khal-os/pack-terminal-service",
     "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
@@ -134,7 +132,7 @@ The service never renders UI. Rendering is the frontend's job. The service's job
 
 <Steps>
   <Step title="Push">
-    CI publishes the frontend npm package AND tags a Docker image.
+    CI validates the app repo/ref and, when the backend is present, tags/publishes the service image and chart according to that repo's workflow.
   </Step>
   <Step title="Tag a release">
     CI packages the Helm sub-chart and pushes it to `oci://ghcr.io/khal-os/charts/pack-terminal`.

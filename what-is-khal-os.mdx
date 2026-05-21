@@ -25,12 +25,11 @@ Every pack is the same three things — a frontend package, an optional Bun serv
       "description": "Desktop settings — appearance, services, SSH keys, keyboard shortcuts, system configuration.",
       "author": "Namastex",
       "permissions": ["nats:subscribe", "nats:publish", "system:clipboard"],
-      "frontend": {
-        "package": "@khal-os/pack-settings"
-      }
+      "kind": "app",
+      "requires": {}
     }
     ```
-    No `backend` block. Scaffolds UI only. Ships as a single npm package.
+    No `backend` block. Scaffolds UI only. Installs from the reviewed git repo/ref.
   </Tab>
   <Tab title="Full-stack (pack-terminal)">
     ```json khal-app.json
@@ -41,7 +40,7 @@ Every pack is the same three things — a frontend package, an optional Bun serv
       "version": "1.0.0",
       "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
       "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
-      "frontend": { "package": "@khal-os/pack-terminal" },
+      "kind": "app",
       "backend": {
         "image": "ghcr.io/khal-os/pack-terminal-service",
         "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
@@ -61,10 +60,10 @@ Every pack is the same three things — a frontend package, an optional Bun serv
       "version": "1.0.0",
       "description": "KhalOS Hello demo bundle — 4 frontend apps + voice engine",
       "apps": [
-        { "id": "hello-console",        "name": "Hello Console",        "frontend": { "package": "@khal-os/pack-hello-console" } },
-        { "id": "hello-agent-manager",  "name": "Hello Agent Manager",  "frontend": { "package": "@khal-os/pack-hello-agent-manager" } },
-        { "id": "hello-flow-designer",  "name": "Hello Flow Designer",  "frontend": { "package": "@khal-os/pack-hello-flow-designer" } },
-        { "id": "hello-sac",            "name": "Hello SAC",            "frontend": { "package": "@khal-os/pack-hello-sac" } }
+        { "id": "hello-console",        "name": "Hello Console",       "kind": "app" },
+        { "id": "hello-agent-manager",  "name": "Hello Agent Manager", "kind": "app" },
+        { "id": "hello-flow-designer",  "name": "Hello Flow Designer", "kind": "app" },
+        { "id": "hello-sac",            "name": "Hello SAC",           "kind": "app" }
       ],
       "backend": {
         "image": "ghcr.io/khal-os/pack-hello-voice-engine",
@@ -112,10 +111,10 @@ From `git push` to a shipped artifact, the pipeline is the same for every pack:
   <Step title="Merge to `main`">
     `release.yml` reads the version from `package/package.json`, tags `v${VERSION}`, and cuts a GitHub Release with auto-generated notes. This is the publish trigger.
   </Step>
-  <Step title="Artifacts publish">
-    - **Frontend:** `@khal-os/pack-<name>` → GitHub Packages (`@latest` on main, `@next` on dev).
-    - **Service (if declared):** Docker image → `ghcr.io/khal-os/pack-<name>-service:<version>`.
-    - **Helm chart (if declared):** OCI chart → `oci://ghcr.io/khal-os/charts/pack-<name>:<version>`.
+  <Step title="Release source is reviewed">
+    - **App source:** reviewed git repo/ref plus `khal-app.json`.
+    - **Service (if declared):** CI may publish a Docker image such as `ghcr.io/khal-os/pack-<name>-service:<version>`.
+    - **Chart (if declared):** CI may publish an OCI chart such as `oci://ghcr.io/khal-os/charts/pack-<name>:<version>`.
   </Step>
 </Steps>
 
@@ -123,15 +122,15 @@ See [Publish your pack](/release/publish-your-pack) for the CI workflow map and 
 
 ## The catalog
 
-Published packs are indexed by the platform's **catalog** — the component that turns your OCI chart into a one-click install for customer admins. From the platform side:
+Reviewed app sources are indexed by the platform's **catalog** — the component that turns a git repo/ref and manifest into a one-click install for customer admins. From the platform side:
 
-- Every pack is registered with its manifest, version, and permissions after publish.
+- Every app is registered with its manifest, version, and permissions after review/release.
 - Customers browse the catalog per-organisation, see the packs they're entitled to, and install them with one action.
 - Cross-org distribution is the catalog's problem, not the FDE's. You publish; the catalog routes.
 
-On the FDE side, this means: do a good job on `khal-app.json` (accurate permissions, clear `env[]`, real description) and your pack lands cleanly in every customer's catalog. Nothing else is required.
+On the FDE side, this means: do a good job on `khal-app.json` (accurate permissions, clear `env[]`, real description), prove `khal install ... --dry-run`, and your app can land cleanly in the target catalog.
 
-See [Customer install](/release/customer-install) for the customer-side handoff contract — what you hand over after publish.
+See [Customer install](/release/customer-install) for the customer-side handoff contract — what you hand over after review/release.
 
 ## Where the automagik toolchain fits
 
