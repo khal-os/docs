@@ -28,7 +28,7 @@ Use the same CLI shape at every rung; only the target changes:
 ```bash
 khal context --target dev --text
 khal doctor --target dev
-khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared --dry-run --json
+khal install <private-khal-gitea-repo-url> --branch <branch> --target dev --scope shared --dry-run --json
 ```
 
 The FDE should not mutate a shared or customer target until the dry-run is clean and the target identity is obvious. For first-run install/login/scaffold commands, see [FDE CLI quickstart](/dev/fde-cli-quickstart).
@@ -71,8 +71,8 @@ The remote code host mirror may be backed by Gitea. Treat that mirror as a trans
 
 A good Gitea mirror proof includes:
 
-- upstream GitHub repo and commit/ref;
-- Gitea mirror URL or remote name, without credentials;
+- authoritative Gitea repo and commit/ref;
+- any temporary mirror URL or remote name, without credentials;
 - agent host or SSH alias used to run the mirrored `dev-local` loop;
 - evidence that the mirrored run used the same manifest/env contract as local FDE work.
 
@@ -105,8 +105,8 @@ At this rung, an FDE should be able to explain:
 The CLI should behave like a Vercel-style deploy companion, but with explicit environment identity:
 
 ```bash
-khal deploy https://github.com/<org>/<app-repo> --branch <branch> --target local
-khal deploy https://github.com/<org>/<app-repo> --branch <branch> --target dev
+khal deploy <private-khal-gitea-repo-url> --branch <branch> --target local
+khal deploy <private-khal-gitea-repo-url> --branch <branch> --target dev
 ```
 
 Before mutating anything, the CLI should print:

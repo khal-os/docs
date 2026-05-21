@@ -14,7 +14,7 @@ A pack is a self-contained KhalOS app: a frontend React package plus an optional
 `@khal-os/app-kit` ships the public `khal` CLI. Install it from npmjs, verify the version/template bundle, then scaffold locally.
 
 ```bash
-npm install --registry=https://registry.npmjs.org/ --global @khal-os/app-kit@latest
+npm install --global @khal-os/app-kit@latest
 khal --version
 khal new --list
 ```
@@ -101,7 +101,7 @@ khal install . --target dev --dry-run --json
 The dry-run validates source shape, `khal-app.json`, env declarations, target resolution, and the command that would perform the real install. It performs no mutation. For remote app repos, use an explicit branch:
 
 ```bash
-khal install https://github.com/<org>/<app-repo> --branch dev --target dev --scope shared --dry-run --json
+khal install <private-khal-gitea-repo-url> --branch dev --target dev --scope shared --dry-run --json
 ```
 
 ## 6. See it in the shell

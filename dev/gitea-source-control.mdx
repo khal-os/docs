@@ -5,8 +5,8 @@ description: "How public GitHub docs and private KHAL engineering repositories f
 
 KHAL uses two source-control surfaces intentionally:
 
-- **Public GitHub repositories** for public documentation, public examples, and services that must integrate with public SaaS tools.
-- **Private KHAL Gitea** for internal product engineering, private packs, platform work, and day-to-day team collaboration.
+- **Private KHAL Gitea** for internal product engineering, private app repos, platform work, and day-to-day team collaboration.
+- **Public GitHub repositories** only for the public docs repo and repos that still need public SaaS integration, currently including app-kit and desktop.
 
 This split is a security boundary, not a temporary accident. Public docs should stay easy to publish and safe to expose; private engineering work should stay behind KHAL-controlled access.
 
@@ -76,7 +76,7 @@ When sharing evidence in public docs or public issues, redact private remote URL
 | Work surface | Source control | Deploy/publish path |
 | --- | --- | --- |
 | Public docs and FDE manual | Public GitHub docs repo | Mintlify |
-| Public example code | Public GitHub repo | GitHub + normal public CI |
+| GitHub-hosted exceptions such as app-kit/desktop | Public GitHub repo | GitHub + required public SaaS/cloud integrations |
 | Private KHAL platform/app work | Internal KHAL Gitea | Internal CI/deploy path for that repo |
 | Temporary mirrored checkout | Mirror/transport only | Not a source-of-truth change by itself |
 

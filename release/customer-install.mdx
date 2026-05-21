@@ -23,13 +23,13 @@ Do not hand off a pack npm package name. App repos are installed from git; `@kha
 The customer/admin UI and CLI are two views of the same install contract. The FDE dry-run shape is:
 
 ```bash
-khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared --dry-run --json
+khal install <private-khal-gitea-repo-url> --branch <branch> --target dev --scope shared --dry-run --json
 ```
 
 A real authorized install omits `--dry-run`:
 
 ```bash
-khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared
+khal install <private-khal-gitea-repo-url> --branch <branch> --target dev --scope shared
 ```
 
 See [FDE CLI quickstart](/dev/fde-cli-quickstart) for login and troubleshooting.
