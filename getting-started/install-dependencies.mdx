@@ -16,14 +16,18 @@ KhalOS uses two package managers on purpose. The **app-kit workspace** (the `@kh
   </Card>
 </CardGroup>
 
-## Node version
+## Node version and CLI channel
 
 Install **Node 20 or newer**. The `@khal-os/*` packages target modern Node and `bun` itself installs cleanly on 20.x. If you use `nvm`, run `nvm use` inside any repo that ships an `.nvmrc`.
+
+The `khal` binary comes from `@khal-os/app-kit` on npmjs. Fresh FDE installs should use `@latest`; use `@next` only when a release owner explicitly asks you to validate an unreleased CLI fix.
 
 ```bash
 node --version   # v20.x or newer
 pnpm --version   # any recent release
 bun --version    # 1.x
+npm install --global @khal-os/app-kit@latest
+khal --version
 ```
 
 ## The SDK workspace — `pnpm`
