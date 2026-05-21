@@ -12,7 +12,7 @@ This is the layout you get when you scaffold from the template:
 ```
 .
 ├── khal-app.json          # Manifest (validated by @khal-os/types)
-├── package/               # Frontend npm package (@khal-os/pack-<name>)
+├── package/               # Frontend bundle source
 │   ├── src/index.tsx      # Default export: React component
 │   ├── tsup.config.ts
 │   └── package.json
@@ -24,7 +24,7 @@ This is the layout you get when you scaffold from the template:
 │   ├── Chart.yaml
 │   ├── values.yaml
 │   └── templates/
-└── .github/workflows/     # CI + npm publish + Docker build + Helm release
+└── .github/workflows/     # CI + release/build automation
 ```
 
 <Frame>
@@ -40,8 +40,8 @@ This is the layout you get when you scaffold from the template:
     Every field — required and optional — lives in the [khal-app.json reference](/packs/khal-app-json).
   </Accordion>
 
-  <Accordion title="package/ — the frontend npm package" icon="react">
-    The React surface of your pack. `package/src/index.tsx` default-exports a component; `tsup.config.ts` produces CJS + ESM + `.d.ts` bundles; `package/package.json` is what gets published to GitHub Packages as `@khal-os/pack-<name>`. The shell loads this package at runtime and mounts the default export into a window.
+  <Accordion title="package/ — the frontend source" icon="react">
+    The React surface of your pack. `package/src/index.tsx` default-exports a component; `tsup.config.ts` produces CJS + ESM + `.d.ts` bundles for the platform build/install path. The app identity is the git repo/ref plus `khal-app.json`, not a frontend npm package.
   </Accordion>
 
   <Accordion title="service/ — the optional backend pod" icon="server">
@@ -53,12 +53,12 @@ This is the layout you get when you scaffold from the template:
   </Accordion>
 
   <Accordion title=".github/workflows/ — CI + release" icon="github">
-    Four workflows handle everything from PR validation to publishing. Every push or tag triggers the right one automatically:
+    Workflows handle everything from PR validation to release metadata and backend artifacts. Every push or tag triggers the right one automatically:
 
     | Workflow | Trigger | What it does |
     |---|---|---|
     | `ci.yml` | Pull request | Lint, typecheck, build, test |
-    | `publish-npm.yml` | Push to `dev` / `main` | Publishes `@khal-os/pack-<name>` to GitHub Packages (`@next` / `@latest`) |
+    | `release.yml` | Push to `main` or tag | Tags/releases the reviewed git revision; backend image/chart publishing is repo-specific |
     | `docker-build.yml` | Push to `dev` / `main` | Builds and pushes the service image (`:next` / `:latest`) |
     | `helm-release.yml` | Tag `v*` | Packages the chart and pushes it to `oci://ghcr.io/khal-os/charts` |
 
@@ -77,6 +77,6 @@ This is the layout you get when you scaffold from the template:
     Every manifest field — required and optional — with examples pulled from real packs.
   </Card>
   <Card title="Publish your pack" href="/release/publish-your-pack">
-    The CI-driven path from commit to installable pack — branches, tags, and the four workflows that ship it.
+    The git-native path from commit to reviewed install source — branches, tags, dry-runs, and handoff.
   </Card>
 </CardGroup>

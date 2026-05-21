@@ -34,9 +34,8 @@ No `backend` block. No `ports`. Reads user config via `useKhalAuth()` and writes
   "description": "Desktop settings — manage appearance, services, SSH keys, keyboard shortcuts, and system configuration.",
   "author": "Namastex",
   "permissions": ["nats:subscribe", "nats:publish", "system:clipboard"],
-  "frontend": {
-    "package": "@khal-os/pack-settings"
-  }
+  "kind": "app",
+  "requires": {}
 }
 ```
 
@@ -54,9 +53,7 @@ The canonical full-stack pattern. Frontend subscribes to PTY output; backend own
   "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
   "author": "KhalOS Core Team",
   "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
-  "frontend": {
-    "package": "@khal-os/pack-terminal"
-  },
+  "kind": "app",
   "backend": {
     "image": "ghcr.io/khal-os/pack-terminal-service",
     "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
@@ -82,9 +79,7 @@ Same shape as pack-terminal but a different permission surface (`files:read`, `f
   "description": "File manager — browse, read, write, and watch filesystem operations over NATS.",
   "author": "Namastex",
   "permissions": ["files:read", "files:write", "nats:publish", "nats:subscribe"],
-  "frontend": {
-    "package": "@khal-os/pack-files"
-  },
+  "kind": "app",
   "backend": {
     "image": "gru.ocir.io/grkjlq07pmjv/pack-files-service",
     "helmChart": "oci://gru.ocir.io/grkjlq07pmjv/charts/pack-files",
@@ -111,10 +106,10 @@ When you're shipping a suite of related apps, declare them under a single `apps[
   "author": "KhalOS Core Team",
   "permissions": [],
   "apps": [
-    { "id": "hello-console",        "name": "Hello Console",        "frontend": { "package": "@khal-os/pack-hello-console" } },
-    { "id": "hello-agent-manager",  "name": "Hello Agent Manager",  "frontend": { "package": "@khal-os/pack-hello-agent-manager" } },
-    { "id": "hello-flow-designer",  "name": "Hello Flow Designer",  "frontend": { "package": "@khal-os/pack-hello-flow-designer" } },
-    { "id": "hello-sac",            "name": "Hello SAC",            "frontend": { "package": "@khal-os/pack-hello-sac" } }
+    { "id": "hello-console",        "name": "Hello Console",       "kind": "app" },
+    { "id": "hello-agent-manager",  "name": "Hello Agent Manager", "kind": "app" },
+    { "id": "hello-flow-designer",  "name": "Hello Flow Designer", "kind": "app" },
+    { "id": "hello-sac",            "name": "Hello SAC",           "kind": "app" }
   ],
   "backend": {
     "image": "ghcr.io/khal-os/pack-hello-voice-engine",
@@ -136,8 +131,8 @@ Reading four real manifests side by side reveals the shape language:
 
 | Want | Look at | Copy this pattern |
 |---|---|---|
-| Minimal pack, no backend | `pack-settings` | `permissions` + `frontend.package` — that's it |
-| Full-stack with one service | `pack-terminal` | `frontend.package` + `backend.{image, helmChart, env, ports}` |
+| Minimal app, no backend | `pack-settings` | `permissions` + `kind: "app"` — that's it |
+| Full-stack with one service | `pack-terminal` | `kind: "app"` + `backend.{image, helmChart, env, ports}` |
 | Permission-heavy pack | `pack-files` | `permissions` grows with what you touch (filesystem, PTY, network) |
 | Customer-scoped registry | `pack-files` | `backend.image` can target any OCI registry, not just `ghcr.io/khal-os/*` |
 | Multi-frontend suite | `pack-hello` | Swap `frontend` for `apps[]`, keep a single shared `backend` |
@@ -157,8 +152,8 @@ Reading four real manifests side by side reveals the shape language:
   <Step title="Read its `service/` (if full-stack)">
     The Bun entry. See how it subscribes, how it publishes, and how it handles the NATS connection.
   </Step>
-  <Step title="Diff against `pack-template`">
-    Anything in your pack that looks different from `pack-template` should be justified by your pack's requirements. Drift from the template is a maintenance bill.
+  <Step title="Diff against `khal new` output">
+    Anything in your app that looks different from a fresh `khal new app` scaffold should be justified by your app's requirements. Drift from the template is a maintenance bill.
   </Step>
 </Steps>
 

@@ -3,7 +3,7 @@ title: "Install dependencies"
 description: "Which package manager to use where — pnpm for the SDK workspace, bun for pack-* repos — and the commands that get everything compiling."
 ---
 
-KhalOS uses two package managers on purpose. The **SDK workspace** (the `@khal-os/*` packages you'll import into your pack) is a `pnpm` monorepo. Each **`pack-*` repo** (including `pack-template`) is a `bun` workspace. Knowing which tool runs where is the only setup detail that trips up first-time contributors.
+KhalOS uses two package managers on purpose. The **app-kit workspace** (the `@khal-os/*` framework packages and the `khal` CLI) is a `pnpm` monorepo. Each generated app/service/workflow repo is a `bun` workspace. Knowing which tool runs where is the only setup detail that trips up first-time contributors.
 
 ## TL;DR
 
@@ -12,7 +12,7 @@ KhalOS uses two package managers on purpose. The **SDK workspace** (the `@khal-o
     For the `@khal-os/*` SDK workspace. `pnpm install`, `pnpm build`, `pnpm typecheck`, `pnpm lint`.
   </Card>
   <Card title="bun" icon="bolt">
-    For every `pack-*` repo (the scaffold you clone from `pack-template`). `bun install`, `bun run build`, `bun run typecheck`.
+    For generated app, service, and workflow repos. `bun install`, `bun run build`, `bun run typecheck`.
   </Card>
 </CardGroup>
 
@@ -28,7 +28,7 @@ bun --version    # 1.x
 
 ## The SDK workspace — `pnpm`
 
-The SDK workspace ships the four framework packages your pack will depend on: `@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`, and `@khal-os/dev-cli`. It uses `pnpm` and Turbo under the hood.
+The SDK workspace ships the four framework packages your pack will depend on: `@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`, and `@khal-os/app-kit` (the `khal` CLI). It uses `pnpm` and Turbo under the hood.
 
 <CodeGroup>
 
@@ -42,11 +42,11 @@ pnpm lint:fix       # biome check --write .
 
 </CodeGroup>
 
-You usually don't need to run these yourself: the packages publish from CI to GitHub Packages, and your pack consumes them as ordinary npm dependencies. Install them here only if you're debugging an SDK issue or running a local snapshot of the SDK against your pack.
+You usually don't need to run these yourself: the shared packages publish from CI to **npmjs**, and your pack consumes them as ordinary npm dependencies. Install them here only if you're debugging an SDK issue or running a local snapshot of the SDK against your pack.
 
 ## Pack repos — `bun`
 
-Every `pack-*` repo — including the scaffold you clone from `pack-template` — uses `bun` as both its package manager and its runtime. `bun install` is fast, workspaces are first-class, and the included bundler already matches the toolchain the template expects.
+Every generated app, service, or workflow repo uses `bun` as both its package manager and its runtime. `bun install` is fast, workspaces are first-class, and the bundled `khal new` templates already match the toolchain the app-kit expects.
 
 <CodeGroup>
 
@@ -78,18 +78,19 @@ After you've cloned the workspace, pick one of each and confirm both install cle
     `pnpm build` should finish with every package green in the Turbo summary.
   </Step>
 
-  <Step title="A reference pack">
+  <Step title="A generated app repo">
     ```bash
-    cd repos/pack-template
-    bun install && bun run build
+    khal new app hello-fde
+    cd hello-fde
+    bun install && bun run build && bun run typecheck
     ```
 
-    `bun run build` should emit CJS + ESM + `.d.ts` outputs into `package/dist/`.
+    The generated repo should build cleanly, then pass `khal install . --target dev --dry-run --json` before any real target mutation.
   </Step>
 </Steps>
 
 <Frame>
-  ![Split terminal showing pnpm install in app-kit on the left and bun install in pack-template on the right, both finishing green.](/images/getting-started/pnpm-bun-split.png)
+  ![Split terminal showing pnpm install in app-kit on the left and bun install in a generated app repo on the right, both finishing green.](/images/getting-started/pnpm-bun-split.png)
 </Frame>
 
 ## Next steps

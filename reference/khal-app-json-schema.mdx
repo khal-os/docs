@@ -5,7 +5,7 @@ description: 'The complete manifest reference, derived from @khal-os/types.'
 
 Every pack ships a `khal-app.json` at its root. The schema lives in [`@khal-os/types`](https://github.com/khal-os/app-kit/tree/main/packages/types) — this page is a field-by-field reference.
 
-The `@khal-os/dev-cli` tool validates your manifest at build time; invalid manifests fail CI before they ship.
+The `khal` CLI and `@khal-os/types` validate your manifest during local preflight/build; invalid manifests fail before install or CI release.
 
 ## Top-level fields
 
@@ -41,8 +41,8 @@ Permission strings the pack requires. Examples: `"nats:publish"`, `"nats:subscri
 Frontend package declaration.
 
 <Expandable title="frontend fields">
-  <ParamField path="frontend.package" type="string" required>
-  The npm package name your frontend publishes to (e.g., `@khal-os/pack-terminal`).
+  <ParamField path="frontend.package" type="string">
+  Legacy frontend package pointer. New git-native app repos should not rely on publishing an app npm package for install.
   </ParamField>
 </Expandable>
 </ParamField>
@@ -89,7 +89,7 @@ Environment variables customers configure per install. See [Customer install](/r
 </ParamField>
 
 <ParamField path="views" type="array">
-Optional. If your pack exposes multiple windows or view modes, declare them here with per-view permission and role requirements. Most packs have a single implicit view from `frontend.package`.
+Optional. If your pack exposes multiple windows or view modes, declare them here with per-view permission and role requirements.
 </ParamField>
 
 <ParamField path="services" type="array">
@@ -112,8 +112,10 @@ Advanced. Provision a per-user container when the pack is installed. Used for hi
   "description": "What my pack does in one line",
   "author": "My Company",
   "permissions": ["nats:publish", "nats:subscribe", "user:read"],
-  "frontend": {
-    "package": "@khal-os/pack-my-pack"
+  "kind": "app",
+  "requires": {
+    "postgres": true,
+    "nats": { "streams": ["my-pack"] }
   },
   "backend": {
     "image": "ghcr.io/khal-os/pack-my-pack-service",

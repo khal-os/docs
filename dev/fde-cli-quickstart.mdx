@@ -1,0 +1,223 @@
+---
+title: 'FDE CLI quickstart'
+description: 'Install the public khal CLI from npmjs, log in with WorkOS, scaffold a new app, validate it locally, and dry-run install before touching a target.'
+---
+
+This is the verified first-run path for a Field Delivery Engineer using the public `khal` CLI.
+
+<Warning>
+Install the CLI from **npmjs**. Do not configure GitHub Packages for this flow. If a GitHub Packages entry exists for app-kit, treat it as non-authoritative for FDE installs; npmjs is the registry FDEs use.
+</Warning>
+
+## 0. Prerequisites
+
+Install current Node and Bun before you start:
+
+```bash
+node --version    # Node.js 20+; Node.js 22 is used in app-kit CI
+npm --version     # npm 10+ works
+bun --version     # required by generated app/service/workflow repos
+```
+
+If you will install from private GitHub app repos, authenticate GitHub too:
+
+```bash
+gh auth login
+gh auth status
+```
+
+## 1. Install `khal` from npmjs
+
+Use the package `@khal-os/app-kit`. The binary is `khal`.
+
+<CodeGroup>
+```bash Global install
+npm install --registry=https://registry.npmjs.org/ --global @khal-os/app-kit@latest
+khal --version
+```
+
+```bash Project-local install
+npm install --registry=https://registry.npmjs.org/ --save-dev @khal-os/app-kit@latest
+npx khal --version
+```
+
+```bash One-shot without installing globally
+npm exec --registry=https://registry.npmjs.org/ --package @khal-os/app-kit@latest -- khal --version
+```
+</CodeGroup>
+
+The currently verified npmjs `latest` during this docs update was:
+
+```text
+1.0.57
+```
+
+Then inspect the available templates:
+
+```bash
+khal new --list
+```
+
+Expected shape:
+
+```text
+Bundled templates:
+  app        v1.0.57
+  service    v1.0.57
+  workflow   v1.0.57
+```
+
+## 2. Log in to a target
+
+On a workstation with a browser:
+
+```bash
+khal auth login --target dev
+```
+
+On SSH/headless/agent sessions, print the URL instead of trying to open a browser:
+
+```bash
+khal auth login --target dev --no-browser
+```
+
+The CLI prints a WorkOS/AuthKit URL and listens for the localhost callback. It stores only the returned KhalOS session token.
+
+Verify identity and recovery state without printing secrets:
+
+```bash
+khal auth status --target dev --json
+khal whoami --target dev --json
+```
+
+`khal auth status --json` exits 0 even when unauthenticated and prints the next login command. `khal whoami --json` exits 2 when no credential exists.
+
+## 3. Scaffold a new app, service, or workflow
+
+For an app repo:
+
+```bash
+khal new app my-first-app
+cd my-first-app
+```
+
+For backend-only or workflow-first work:
+
+```bash
+khal new service my-first-service
+khal new workflow my-first-workflow
+```
+
+Generated repos are git-native KHAL apps: **repo + branch + `khal-app.json`**. Do not publish generated app repos to npm.
+
+## 4. Build and typecheck locally
+
+Generated repos use Bun:
+
+```bash
+bun install
+bun run build
+bun run typecheck
+```
+
+A clean scaffold should pass all three before you touch a shared target.
+
+## 5. Dry-run install before mutation
+
+From the generated repo root:
+
+```bash
+khal install . --target dev --dry-run --json
+```
+
+A clean scaffold reports a passing summary and zero blocking checks:
+
+```json
+{
+  "summary": {
+    "status": "pass",
+    "message": "Dry-run preflight passed; no mutations were performed."
+  }
+}
+```
+
+For a hosted app repo, always pass an explicit branch:
+
+```bash
+khal install https://github.com/<org>/<app-repo> --branch dev --target dev --scope shared --dry-run --json
+```
+
+## 6. Install after dry-run passes
+
+After login, permission, and a clean dry-run:
+
+```bash
+khal install . --target dev --scope shared
+```
+
+For a hosted repo:
+
+```bash
+khal install https://github.com/<org>/<app-repo> --branch dev --target dev --scope shared
+```
+
+If the target denies the mutation, ask for the permission named by the CLI. The current install path usually requires `os.marketplace.install`.
+
+## 7. Useful proof commands
+
+```bash
+khal context --target dev --text
+khal doctor --target dev
+khal logs <app-id> --target dev --tail 50
+khal status <app-id> --target dev --json
+khal open <app-id> --target dev --check --json
+```
+
+`status` and `open` are currently hidden compatibility helpers. They are useful for proof, but they are not yet part of the public `khal --help` ladder.
+
+## Troubleshooting
+
+### `khal --version` is stale
+
+```bash
+which khal
+npm view @khal-os/app-kit dist-tags --registry=https://registry.npmjs.org/ --json
+npm cache clean --force
+npm install --registry=https://registry.npmjs.org/ --global @khal-os/app-kit@latest
+```
+
+### GitHub Packages shows a different version
+
+Ignore it for FDE CLI installation. npmjs is canonical for `@khal-os/app-kit`.
+
+### Private GitHub repo fetch fails
+
+Authenticate source control first:
+
+```bash
+gh auth login
+gh auth status
+ssh -T git@github.com
+```
+
+Do not print or commit `GH_TOKEN` or `GITHUB_TOKEN`.
+
+## What was dogfooded
+
+This page was written after running the path from a clean directory with npmjs `@latest`:
+
+```bash
+npm install --registry=https://registry.npmjs.org/ @khal-os/app-kit@latest
+./node_modules/.bin/khal --version
+./node_modules/.bin/khal auth login --target dev --no-browser
+./node_modules/.bin/khal new app fde-demo-app
+./node_modules/.bin/khal new service fde-demo-service
+./node_modules/.bin/khal new workflow fde-demo-workflow
+# for each generated repo:
+bun install
+bun run build
+bun run typecheck
+khal install . --target dev --dry-run --json
+```
+
+All three generated template kinds installed dependencies, built, typechecked, and passed install dry-run with zero blocking checks.

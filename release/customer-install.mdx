@@ -1,17 +1,38 @@
 ---
 title: 'Customer install'
-description: 'How a customer admin installs your pack into their Khal-OS instance — the thin version an FDE needs to understand.'
+description: 'How a customer admin installs a git-native Khal-OS app — the thin version an FDE needs to understand.'
 ---
 
-Once your pack is [published](/release/publish-your-pack), a customer admin installs it into their Khal-OS instance. This page intentionally stays thin: **the FDE's job ends at publish; the customer's job begins at install.** What follows is the handoff contract.
+Once your app has a reviewed git revision, a customer admin installs it into their Khal-OS instance. This page intentionally stays thin: **the FDE's job ends at a reviewed git handoff; the customer's job begins at install.** What follows is the handoff contract.
 
 ## What the customer needs from you
 
-<Card title="The install artifact" icon="package">
-  - **Helm chart OCI URL** (for full-stack packs): `oci://ghcr.io/khal-os/charts/pack-<name>`
-  - **Version** (the tag from your last release, e.g., `v1.2.0`)
-  - **npm package name** (frontend-only packs): `@khal-os/pack-<name>@<version>`
+<Card title="The install source" icon="code-branch">
+  - **Git repository URL** for the app repo.
+  - **Branch, tag, or commit** that was reviewed and released.
+  - **Manifest path** if it is not the repository root `khal-app.json`.
+  - **Backend image/chart references** only if the app declares a backend service.
 </Card>
+
+<Warning>
+Do not hand off a pack npm package name. App repos are installed from git; `@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`, and `@khal-os/app-kit` are framework/CLI dependencies, not customer install artifacts.
+</Warning>
+
+## CLI equivalent
+
+The customer/admin UI and CLI are two views of the same install contract. The FDE dry-run shape is:
+
+```bash
+khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared --dry-run --json
+```
+
+A real authorized install omits `--dry-run`:
+
+```bash
+khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared
+```
+
+See [FDE CLI quickstart](/dev/fde-cli-quickstart) for login and troubleshooting.
 
 ## What the customer needs to configure
 
@@ -53,7 +74,7 @@ An FDE doesn't run this — but it's useful to understand what happens on the ot
 1. Admin picks your pack from their platform's install UI (or runs the equivalent CLI command).
 2. Platform pulls the Helm chart from OCI, applies it alongside the shell.
 3. Admin fills in the `env[]` values the pack declared.
-4. Platform injects env, starts the service pod, and loads the frontend npm package into the shell on next launch.
+4. Platform builds or locates the frontend bundle, deploys any declared backend service/chart, injects env, and registers the app for the shell.
 
 ## Versioning and updates
 

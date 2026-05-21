@@ -1,9 +1,9 @@
 ---
 title: 'Publish your pack'
-description: 'Push → CI → published. The CI-driven publish flow inherited from pack-template.'
+description: 'Push → CI → reviewed git source. The FDE release flow before customer install.'
 ---
 
-Publishing a Khal pack is a **git push**, not an SSH session. The CI workflows you inherit from `pack-template` do the rest: lint, typecheck, test, Helm lint, manifest validation, release tag, publish. This page walks through the inherited pipeline and explains what lands where.
+Publishing a Khal app is a **git push**, not an npm publish. The CI workflows in a generated app repo validate lint, typecheck, tests, image/chart metadata when present, and release notes. The install source remains the reviewed git repo/ref plus `khal-app.json`.
 
 ## The flow
 
@@ -17,8 +17,8 @@ Publishing a Khal pack is a **git push**, not an SSH session. The CI workflows y
     - Tags `v${VERSION}` and pushes the tag.
     - Creates a GitHub Release with auto-generated notes from commits since the previous tag.
   </Step>
-  <Step title="Publish">
-    The frontend npm package publishes to **GitHub Packages** as `@khal-os/pack-<name>`. If your pack has a backend, the Docker image publishes to `ghcr.io/khal-os/pack-<name>-service` and the Helm chart to `oci://ghcr.io/khal-os/charts/pack-<name>`.
+  <Step title="Publish release metadata">
+    App repos are not published as npm packages. If the app has a backend, CI may publish a service image and chart according to that repo's workflow. The frontend/app identity remains the git repo/ref and `khal-app.json`.
   </Step>
   <Step title="Install">
     A customer admin installs the published version through their platform's install flow. See [Customer install](/release/customer-install).
@@ -31,7 +31,7 @@ You never SSH into a cluster. You never run `kubectl apply`. You never push a Do
 
 ## Inherited workflows
 
-Every pack scaffolded from `pack-template` ships these workflows in `.github/workflows/`:
+Generated app repos commonly ship these workflows in `.github/workflows/`:
 
 | Workflow | Trigger | Does |
 |---|---|---|
@@ -40,6 +40,16 @@ Every pack scaffolded from `pack-template` ships these workflows in `.github/wor
 | `release.yml` | Push to `main` | Tag + GitHub Release + version-driven publish. |
 
 Customize behavior by editing these workflows in your pack repo — they're yours, not inherited-at-runtime.
+
+## FDE dry-run before handoff
+
+Before handoff, prove the exact git source/ref with the public CLI:
+
+```bash
+khal install https://github.com/<org>/<app-repo> --branch <branch> --target dev --scope shared --dry-run --json
+```
+
+For the full CLI setup and login flow, see [FDE CLI quickstart](/dev/fde-cli-quickstart).
 
 ## Versioning
 
