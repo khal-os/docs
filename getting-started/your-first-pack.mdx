@@ -6,19 +6,51 @@ description: "Scaffold a pack with `khal new`, edit a React component, and see i
 A pack is a self-contained KhalOS app: a frontend React package plus an optional backend service, a manifest that declares both, and a Helm chart for shipping. In this walkthrough you'll go from an empty directory to a running "Hello FDE" pack in under ten minutes.
 
 <Callout type="info">
-  This page is the fast path. For the full pack contract — every manifest field, every CI workflow, every deploy mode — follow the **Next steps** links at the bottom.
+  This page is the fast path. For the full pack contract — every manifest field, every install mode, every design-system expectation — follow the **Next steps** links at the bottom.
+</Callout>
+
+<Callout type="warning">
+  Packs are installed from git. Do not add `.npmrc`, `publishConfig`, npm publish scripts/workflows, or `frontend.package` to a new pack manifest.
 </Callout>
 
 ## 1. Scaffold with `khal new`
 
 `@khal-os/app-kit` ships a `khal new` command that stamps out a complete pack locally. It bundles three templates — `app` (full-stack), `service` (backend-only), and `workflow` (Temporal) — and emits a runnable project with no network calls.
 
+Verify the CLI you are about to use:
+
+```bash
+khal --version
+khal new --list
+```
+
+Expected shape:
+
+```text
+1.x.y
+Bundled templates:
+  app        v1.x.y
+  service    v1.x.y
+  workflow   v1.x.y
+```
+
+Package note: the npm package is `@khal-os/app-kit` and its binary is `khal`. As of 2026-05-18, npm reports `latest` as `1.0.14` and `next` as `1.0.24`; use an installed, verified `khal` binary for scaffolding until the public `latest` tag is promoted to the release you want to document.
+
 ```bash
 khal new app <name>
 cd <name>
 ```
 
-Replace `<name>` with your pack's identifier — lowercase, hyphen-separated, and short. It becomes the Helm chart name, the manifest `id`, and the package name. `khal new` substitutes the token everywhere it appears in the bundled template.
+Replace `<name>` with your pack's identifier — lowercase, hyphen-separated, and short. It becomes the manifest `id`, local build workspace name, and any generated backend/chart names. `khal new` substitutes the token everywhere it appears in the bundled scaffold.
+
+Current scaffold output ends with:
+
+```text
+Next steps:
+  1. cd <name>
+  2. pnpm install
+  3. khal start
+```
 
 <Callout type="tip">
   Run `khal new` with no arguments to see the three available types and their one-line descriptions. Add `--list` to inspect the bundled template versions.
@@ -71,15 +103,14 @@ If your pack is **frontend-only**, delete the `service/` directory and remove th
 ## 4. Build and typecheck
 
 ```bash
-bun install
-bun run build
-bun run typecheck
+pnpm install
+pnpm build
 ```
 
-`bun run build` produces CJS + ESM bundles plus TypeScript declarations in `package/dist/`. `bun run typecheck` validates both the frontend package and the service (if present).
+Current `khal new app` scaffolds expose a root `"build": "khal build"` script. Run the scripts committed in your generated `package.json`; older pack repos may still expose separate `bun run build` or `bun run typecheck` scripts.
 
 <Frame>
-  ![Terminal showing bun run build output with dist artifacts listed, followed by a green bun run typecheck summary.](/images/getting-started/bun-build-success.png)
+  ![Terminal showing pnpm build output with dist artifacts listed and a green build summary.](/images/getting-started/bun-build-success.png)
 </Frame>
 
 ## 5. See it in the shell
@@ -114,5 +145,8 @@ You've got two paths to render your pack in a live shell:
   </Card>
   <Card title="Full-stack pack pattern" href="/patterns/full-stack-pack">
     The end-to-end reference pattern for packs with both a frontend and a backend service.
+  </Card>
+  <Card title="Design-system reference app" href="/patterns/design-system-reference-app">
+    What to copy when you want your pack to look, install, and QA like a first-class KhalOS app.
   </Card>
 </CardGroup>

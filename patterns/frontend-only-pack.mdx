@@ -7,7 +7,11 @@ description: 'The canonical pattern when your pack does not need a backend servi
   <img alt="pack-settings running inside the khal-os shell" src="/images/pack-settings-preview.png" />
 </Frame>
 
-A **frontend-only pack** is the simplest shape a Khal pack can take. No `service/` directory, no Docker image, no Helm chart — just a React component published as an npm package that the shell loads when your pack is installed. `pack-settings` is the reference implementation for this pattern.
+A **frontend-only pack** is the simplest shape a Khal pack can take. No `service/` directory, no Docker image, no Helm chart — just a React component bundled from the pack repo and loaded by the shell after git-native install. `pack-settings` is the reference implementation for this pattern, but older snapshots may still show npm-era fields that new packs must not copy.
+
+<Callout type="warning">
+  New packs are git-native. Do not add `.npmrc`, `publishConfig`, npm publish scripts/workflows, or `frontend.package` to `khal-app.json`.
+</Callout>
 
 ## When to pick this shape
 
@@ -30,13 +34,13 @@ A **frontend-only pack** is the simplest shape a Khal pack can take. No `service
 
 ```
 pack-settings/
-├── khal-app.json         # Manifest — no services[] entry
+├── khal-app.json         # Manifest — no services[] entry and no frontend.package
 ├── package/
 │   ├── src/index.tsx     # Default export: a React component
 │   ├── tsup.config.ts    # CJS + ESM + .d.ts build
-│   └── package.json      # Publishes @khal-os/pack-settings
+│   └── package.json      # Private workspace package
 ├── package.json          # Workspace root
-└── .github/workflows/    # CI + npm publish
+└── .github/workflows/    # CI checks only; no npm publish workflow
 ```
 
 No `service/`. No `helm/`. No `Dockerfile`. The pack lives entirely in the browser.
@@ -47,16 +51,17 @@ No `service/`. No `helm/`. No `Dockerfile`. The pack lives entirely in the brows
 ```json khal-app.json (frontend-only)
 {
   "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "kind": "app",
   "id": "settings",
   "name": "Settings",
   "version": "1.0.0",
   "icon": "./package/src/assets/icon.svg",
   "description": "User preferences and workspace settings",
   "author": "KhalOS Core Team",
+  "defaultScope": "user",
+  "allowedScopes": ["user", "shared"],
   "permissions": ["user:read", "user:update"],
-  "frontend": {
-    "package": "@khal-os/pack-settings"
-  }
+  "bundlePath": "package/dist/index.mjs"
 }
 ```
 </CodeGroup>
@@ -91,22 +96,22 @@ export default function SettingsPack() {
 The SDK does not expose a `signOut` method — sign-out is a desktop-shell concern, not a pack concern. The user signs out of KhalOS itself, not out of an individual pack. See [`useKhalAuth`](/sdk/useKhalAuth) for the full contract.
 </Note>
 
-## Publishing
+## Install
 
 <Steps>
-  <Step title="Push to dev">
-    CI publishes `@khal-os/pack-settings@next` to GitHub Packages.
+  <Step title="Push to git">
+    Push the pack repo or branch that contains `khal-app.json` and the built frontend bundle inputs.
   </Step>
-  <Step title="Merge to main">
-    CI publishes `@latest`. No Docker step; no Helm step.
+  <Step title="Install from git">
+    A customer admin installs the pack from the git URL/branch through Marketplace/App Store or the current CLI install path.
   </Step>
-  <Step title="Install into an instance">
-    A customer admin adds `@khal-os/pack-settings@latest` through their platform's install flow. The shell loads the npm package on next launch.
+  <Step title="Load in the shell">
+    The shell reads the kernel registry row and loads the built bundle for that install.
   </Step>
 </Steps>
 
 <Note>
-Frontend-only packs ship faster than full-stack ones because there is no container image to build and no Helm chart to package. Keep the pack frontend-only unless you need server-side behavior.
+Frontend-only packs ship faster than full-stack ones because there is no service container or Helm chart. Keep the pack frontend-only unless you need server-side behavior.
 </Note>
 
 ## What's next
@@ -116,6 +121,6 @@ Frontend-only packs ship faster than full-stack ones because there is no contain
     When you need a backend, go here.
   </Card>
   <Card title="Publish your pack" icon="upload" href="/release/publish-your-pack">
-    The full publish pipeline (npm → Docker → Helm).
+    The git-native release/install pipeline, with backend artifacts only when your pack needs them.
   </Card>
 </CardGroup>

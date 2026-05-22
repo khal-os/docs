@@ -1,0 +1,150 @@
+---
+title: 'Design-system reference app'
+description: 'The copy-with-care pattern for packs that should look, install, and QA like first-class KhalOS apps.'
+---
+
+The **design-system reference app** is the canonical example pack for KhalOS app authors. It is not just a pretty demo. It is the pack we use to prove that a new app can be installed from git, rendered inside the desktop shell, follow the KhalOS visual system, expose the right scope/env behavior, and produce repeatable QA evidence.
+
+<Callout type="warning">
+  **Pack distribution policy:** packs are git-native. Do not add `.npmrc`, `publishConfig`, `publish:next`, `publish:latest`, `npm publish` or `pnpm publish` workflows, or `frontend.package` in `khal-app.json`. The Marketplace/App Store install path reads the git repo and manifest; it does not publish or install a pack from npm.
+</Callout>
+
+## What the reference app demonstrates
+
+<CardGroup cols={2}>
+  <Card title="Manifest contract" icon="file-lines">
+    A small, valid `khal-app.json` with stable identity, intentional scopes, minimal permissions, optional env schema, and no npm package identity.
+  </Card>
+  <Card title="Install behavior" icon="download">
+    Install from a git URL/branch, appear in the launcher through the kernel registry, and load the built bundle from the KhalOS app route.
+  </Card>
+  <Card title="Design-system usage" icon="palette">
+    Compose app screens from `@khal-os/ui` components, tokens, layout primitives, icons, and reduced-motion-safe interactions.
+  </Card>
+  <Card title="QA evidence" icon="clipboard-check">
+    Produce browser, console, network, scope/env, and visual-consistency evidence that a human reviewer can replay.
+  </Card>
+</CardGroup>
+
+## Launch-safe subset vs full reference app
+
+The reference-app pattern has two maturity levels. Use the launch-safe subset now; treat the full app as post-v1 work until app-install, scopes, and bundle contracts stop moving.
+
+| Scope | Safe now | Wait for post-v1/full reference app |
+|---|---|---|
+| Docs | Document the pattern, policy, copy guidance, and QA checklist. | Replace provisional notes with screenshots from the final reference app. |
+| Design system | Point authors at the app-kit `design-system-showcase` as the current component catalog. | Add a dedicated live reference-app route/gallery in app-kit. |
+| Pack repo | Describe the desired repo shape without creating a public canonical repo yet. | Create `pack-reference-app` from the settled template and install it through Marketplace/App Store. |
+| Install QA | Define evidence to collect: launcher tile, bundle route, app window, scope/env panel, console. | Capture browser evidence against local/dev instances and publish the verified fixture. |
+| Scaffolding | Tell authors what to copy manually. | Add `khal new` template/scaffolder affordances only after scaffolders are stable. |
+
+## Manifest shape to copy
+
+Start with the smallest manifest that can prove the loop. Keep it boring: identity, scopes, permissions, optional env, and a bundle path only if the current install pipeline requires it.
+
+```json khal-app.json
+{
+  "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "kind": "app",
+  "id": "reference-app",
+  "name": "Reference App",
+  "version": "0.1.0",
+  "description": "KhalOS design-system and install-flow reference app",
+  "author": "KhalOS Core Team",
+  "defaultScope": "user",
+  "allowedScopes": ["user", "shared"],
+  "permissions": [],
+  "bundlePath": "package/dist/index.mjs"
+}
+```
+
+<Callout type="info">
+  `bundlePath` is an install-pipeline detail, not a package identity. If the current app-install contract changes the canonical bundle field or route, follow that contract and keep the npm-specific `frontend.package` field out of new pack manifests.
+</Callout>
+
+### Scope and install behavior
+
+A reference app should make scope behavior visible enough for QA:
+
+- `defaultScope` should be intentional. Use `user` for a personal demo unless the app-install contract requires `shared` first.
+- `allowedScopes` should include only scopes the app actually supports.
+- The installed app should appear through the kernel registry (`os.apps.list`) after install, not through a hard-coded desktop fallback.
+- The app window should load from the KhalOS bundle route for that install, not from npm or a local dev server.
+- The settings/env panel should show either a clear "no env required" state or sample optional env fields with correct vault visibility.
+
+## UI requirements
+
+The reference app should demonstrate the system by composition, not by bespoke CSS.
+
+### Use these first
+
+- `ThemeProvider` or the host-provided theme context
+- `Button`, `Input`, `SectionCard`, `StatusDot`, badges/pills, toolbar/status-bar primitives
+- list, empty-state, loading-state, error-state, and property/settings panel patterns
+- `Icons` from the shared icon set
+- `--khal-*` tokens and exported token CSS/custom properties
+
+### Avoid these
+
+- raw hex colors in app components
+- arbitrary Tailwind color values in app components
+- decorative glass effects outside system chrome
+- motion that ignores `prefers-reduced-motion`
+- direct assumptions about Tauri or desktop internals unless exposed by the SDK/host
+
+## Required screens
+
+A good reference app has enough surface area to exercise the system without becoming a product:
+
+1. **Component gallery:** buttons, inputs, status dots, cards, list rows, toolbar actions, and token examples.
+2. **Workflow screen:** a small deterministic task flow that shows selected state, success, warning, and error handling.
+3. **Empty/loading/error states:** copyable patterns for the first states every real app needs.
+4. **Settings/env screen:** scope metadata plus either "no env required" or optional sample env declarations.
+
+## What to copy vs not copy
+
+| Copy | Do not copy |
+|---|---|
+| The manifest shape: identity, scopes, permissions, env, bundle path if required. | The `id`, `name`, icon, description, or demo copy. |
+| The use of `@khal-os/ui` tokens and primitives. | App-specific layout hacks, raw colors, or hard-coded shell assumptions. |
+| The QA checklist and evidence format. | The reference app's fake data model if your app has a real domain. |
+| The git-native repo/install shape. | Any `.npmrc`, `publishConfig`, npm publish scripts/workflows, or `frontend.package`. |
+| The minimal-permission posture. | Broad permissions copied "just in case." |
+
+## QA evidence checklist
+
+Before calling a reference-style pack ready, attach evidence for each item below:
+
+- Build/typecheck/lint output for the pack repo.
+- Policy scan showing no `.npmrc`, `publishConfig`, publish scripts/workflows, or `frontend.package` in `khal-app.json`.
+- Install command or Marketplace/App Store git URL and branch/tag.
+- Kernel registry proof that the app is listed after install.
+- Bundle route proof: the canonical app bundle URL returns JavaScript with HTTP 200.
+- Browser screenshot of the launcher tile.
+- Browser screenshot of the app window open to the component gallery.
+- Screenshot of the scope/env panel or settings state.
+- Browser console output with no critical errors.
+- Visual comparison notes against app-kit `design-system-showcase` and the desktop shell.
+
+## Where this lives today
+
+Until the full `pack-reference-app` exists, use these sources in order:
+
+1. app-kit `design-system-showcase` for current component and token examples.
+2. `khal new` for current repo layout and build conventions. Treat `pack-template` as historical implementation detail, not the public authoring path.
+3. This page for reference-app policy, QA evidence, and copy guidance.
+4. The app-install/scopes implementation cards for any live contract changes.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Your first pack" icon="rocket" href="/getting-started/your-first-pack">
+    Start with the short path, then return here before polishing the app.
+  </Card>
+  <Card title="Example packs" icon="boxes-stacked" href="/reference/example-packs">
+    Compare real pack shapes and know which legacy patterns not to copy.
+  </Card>
+  <Card title="Manifest schema" icon="file-code" href="/reference/khal-app-json-schema">
+    Read the field-level manifest contract.
+  </Card>
+</CardGroup>

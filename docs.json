@@ -74,7 +74,8 @@
             "group": "Patterns",
             "pages": [
               "patterns/frontend-only-pack",
-              "patterns/full-stack-pack"
+              "patterns/full-stack-pack",
+              "patterns/design-system-reference-app"
             ]
           }
         ]

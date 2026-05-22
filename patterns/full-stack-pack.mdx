@@ -9,6 +9,10 @@ description: 'A pack with a backend service. pack-terminal (PTY over NATS) as th
 
 A **full-stack pack** pairs a frontend React component with a backend service that runs as a pod alongside the shell. The frontend talks to its service over **NATS** — never direct HTTP, never direct TCP. `pack-terminal` is the reference: the browser subscribes to a PTY stream, the service spawns and owns the PTY.
 
+<Callout type="warning">
+  New packs are git-native. Do not add `.npmrc`, `publishConfig`, npm publish scripts/workflows, or `frontend.package` to `khal-app.json`. Backend images and Helm charts may still be pushed to approved registries, but pack identity/content comes from git.
+</Callout>
+
 ## When to pick this shape
 
 <CardGroup cols={2}>
@@ -28,7 +32,7 @@ A **full-stack pack** pairs a frontend React component with a backend service th
 ```
 pack-terminal/
 ├── khal-app.json         # Manifest — declares backend + services
-├── package/              # Frontend npm package
+├── package/              # Frontend source and bundle inputs
 │   └── src/index.tsx     # Uses useNats() to subscribe to PTY output
 ├── service/              # Backend pod
 │   ├── src/index.ts      # Bun server, subscribes to PTY input subject, spawns PTY
@@ -38,7 +42,7 @@ pack-terminal/
 │   ├── Chart.yaml
 │   ├── values.yaml
 │   └── templates/
-└── .github/workflows/    # CI + npm + Docker + Helm publish
+└── .github/workflows/    # CI + optional Docker/Helm artifact builds
 ```
 
 ## Manifest
@@ -47,16 +51,17 @@ pack-terminal/
 ```json khal-app.json (full-stack)
 {
   "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+  "kind": "app",
   "id": "terminal",
   "name": "Terminal",
   "version": "1.0.0",
   "icon": "./package/src/assets/icon.svg",
   "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
   "author": "KhalOS Core Team",
+  "defaultScope": "user",
+  "allowedScopes": ["user", "shared"],
   "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
-  "frontend": {
-    "package": "@khal-os/pack-terminal"
-  },
+  "bundlePath": "package/dist/index.mjs",
   "backend": {
     "image": "ghcr.io/khal-os/pack-terminal-service",
     "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
@@ -133,14 +138,14 @@ The service never renders UI. Rendering is the frontend's job. The service's job
 ## Deploy shape
 
 <Steps>
-  <Step title="Push">
-    CI publishes the frontend npm package AND tags a Docker image.
+  <Step title="Push git revision">
+    Push the pack repo or branch that contains the manifest, frontend, service, and Helm chart sources.
   </Step>
-  <Step title="Tag a release">
-    CI packages the Helm sub-chart and pushes it to `oci://ghcr.io/khal-os/charts/pack-terminal`.
+  <Step title="Build service artifacts">
+    CI may tag a Docker image and package the Helm sub-chart for the backend service.
   </Step>
-  <Step title="Install">
-    A customer admin installs the pack — the platform deploys the service pod alongside the shell, injects env, and the frontend picks up the new pack on next load.
+  <Step title="Install from git">
+    A customer admin installs the pack from the git URL/branch; the platform reads the manifest, deploys the service, injects env, and exposes the frontend bundle to the shell.
   </Step>
 </Steps>
 
@@ -153,6 +158,6 @@ The platform manages pod lifecycle, restart policy, and secret injection. **Your
     How to declare secrets the platform will inject.
   </Card>
   <Card title="Publish your pack" icon="upload" href="/release/publish-your-pack">
-    Full npm + Docker + Helm pipeline.
+    Git-native release flow with optional backend Docker and Helm artifacts.
   </Card>
 </CardGroup>

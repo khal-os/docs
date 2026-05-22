@@ -1,55 +1,33 @@
-# Mintlify Starter Kit
+# KHAL OS public docs
 
-Use the starter kit to get your docs deployed and ready to customize.
+This repository contains the public Mintlify documentation site for KHAL OS. It is the public-facing docs surface for product concepts, app/pack authoring, SDK usage, and release/customer handoff guidance.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## Local development
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
-
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+Run commands from the repository root, where `docs.json` lives:
 
 ```bash
-npx skills add https://mintlify.com/docs
+npx --yes mint@latest dev
+npx --yes mint@latest broken-links
 ```
 
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
+If you prefer a global CLI, install Mintlify with `npm i -g mint` and run `mint dev` or `mint broken-links`.
 
-See the [AI tools guides](/ai-tools) for tool-specific setup.
+## Public/private boundary
 
-## Development
+These docs are public. Do not add secrets, tokens, credentials, customer identifiers, private hostnames, internal IPs, live monitoring URLs, admin usernames, migration/cutover notes, or operator-only runbook commands. Keep production operations and private topology in internal Hermes/KHAL runbooks unless Felipe explicitly approves publication.
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+## Pack distribution policy
 
-```
-npm i -g mint
-```
+Pack/app repos are git-native: Marketplace/App Store installation reads the git repo and `khal-app.json`, then builds/loads the app from that source. Do not document `pack-*` repos as npm or GitHub Packages artifacts.
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+The npm packages that belong in public docs are the app-kit/framework packages only:
 
-```
-mint dev
-```
+- `@khal-os/sdk`
+- `@khal-os/ui`
+- `@khal-os/types`
+- `@khal-os/dev-cli`
 
-View your local preview at `http://localhost:3000`.
+## Review requirement
 
-## Publishing changes
-
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+Open a PR for documentation changes and request review before publishing or merging to the default branch. Public docs changes need product/schema review for technical truth and public/private boundary review for safety.
