@@ -1,65 +1,66 @@
 ---
 title: 'Publish your pack'
-description: 'Push → CI → published. The CI-driven publish flow inherited from pack-template.'
+description: 'Push a git-native pack through review, CI, and release without npm-publishing the pack repo.'
 ---
 
-Publishing a Khal pack is a **git push**, not an SSH session. The CI workflows you inherit from `pack-template` do the rest: lint, typecheck, test, Helm lint, manifest validation, release tag, publish. This page walks through the inherited pipeline and explains what lands where.
+Publishing a Khal pack starts with a **git push**. Pack identity and install content come from the pack repo and `khal-app.json`; a `pack-*` repo is not published to npm or GitHub Packages.
+
+<Warning>
+Do not add `.npmrc`, `publishConfig`, `publish:next`, `publish:latest`, `npm publish`, `pnpm publish`, or `frontend.package` to a pack/app repo. App-kit npm packages such as `@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`, and `@khal-os/app-kit` are framework/CLI dependencies, not pack distribution artifacts.
+</Warning>
 
 ## The flow
 
 <Steps>
   <Step title="Open a PR">
-    The `ci.yml` workflow runs: typecheck, lint, test, `helm lint`, and a check that `khal-app.json` exists. All four must pass before merge.
+    CI runs typecheck, lint, tests, manifest validation, and any service/chart checks declared by the repo. All required checks must pass before merge.
   </Step>
-  <Step title="Merge to `main`">
-    The `release.yml` workflow runs on `push: main`. It:
-    - Reads the version from `package/package.json`.
-    - Tags `v${VERSION}` and pushes the tag.
-    - Creates a GitHub Release with auto-generated notes from commits since the previous tag.
+  <Step title="Merge the reviewed change">
+    The pack repo now contains the git revision the platform can install from: manifest, frontend source/bundle inputs, optional backend service, and optional Helm chart.
   </Step>
-  <Step title="Publish">
-    The frontend npm package publishes to **GitHub Packages** as `@khal-os/pack-<name>`. If your pack has a backend, the Docker image publishes to `ghcr.io/khal-os/pack-<name>-service` and the Helm chart to `oci://ghcr.io/khal-os/charts/pack-<name>`.
+  <Step title="Build release artifacts">
+    CI may tag a GitHub Release for the repo. Full-stack packs may also build a backend container image and package a Helm chart. The frontend remains part of the git-native pack install path, not an npm-published `@khal-os/pack-*` package.
   </Step>
-  <Step title="Install">
-    A customer admin installs the published version through their platform's install flow. See [Customer install](/release/customer-install).
+  <Step title="Install from git">
+    A customer admin installs the reviewed git URL and branch/tag through Marketplace/App Store or the current CLI install path. See [Customer install](/release/customer-install).
   </Step>
 </Steps>
 
 <Note>
-You never SSH into a cluster. You never run `kubectl apply`. You never push a Docker image by hand. Your job ends at "merge the PR". The rest is CI.
+You never SSH into a customer cluster. You never run `kubectl apply`. You never push images by hand. Your public handoff is the reviewed git revision plus any backend image/chart references the platform needs.
 </Note>
 
-## Inherited workflows
+## Workflows to expect
 
-Every pack scaffolded from `pack-template` ships these workflows in `.github/workflows/`:
+New packs should be scaffolded with `khal new`. If you see older `pack-template` language in a historical repo, treat it as implementation history and keep the current git-native policy above.
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | PR to `dev` or `main` | Typecheck, lint, test, Helm lint, manifest validation. |
-| `ci-guards.yml` | PR | Secret scanning (gitleaks), `CLAUDE.md` presence check, `CODEOWNERS` check. |
-| `release.yml` | Push to `main` | Tag + GitHub Release + version-driven publish. |
+| `ci.yml` | PR to `dev` or `main` | Typecheck, lint, test, build, and manifest validation. |
+| `ci-guards.yml` | PR | Secret scanning and repository policy checks. |
+| `release.yml` | Push to release branch/tag | Tags or releases the git revision; may build backend service artifacts. |
 
-Customize behavior by editing these workflows in your pack repo — they're yours, not inherited-at-runtime.
+Customize workflow behavior in your pack repo, but keep pack identity/content in git.
 
 ## Versioning
 
-Pack versions live in `package/package.json` and are the single source of truth. Bump the `version` field in the same PR that merits a release, and `release.yml` will tag + release automatically on merge.
+Pack versions live in `khal-app.json` and may be mirrored in `package/package.json` for build tooling. Bump the version in the PR that ships user-visible changes.
 
 <Warning>
-The version must be a **new** version on every merge to `main` that ships user-visible changes. Merging without a bump will cause `release.yml` to fail to re-tag, and customers won't see a new chart version.
+Versioning must describe the git revision being installed. Do not use npm dist-tags such as `@next` or `@latest` for pack identity.
 </Warning>
 
 ## What a merge does not do
 
-- Does **not** deploy to a customer's instance. Customers pull new pack versions through their own platform flow.
-- Does **not** guarantee your new pack version is the default. Customers may pin to earlier versions.
+- Does **not** deploy to a customer's instance. Customers pull approved git revisions through their own platform flow.
+- Does **not** guarantee the new revision is the default. Customers may pin to earlier tags/branches.
 - Does **not** invalidate existing users' sessions in the shell.
 
 ## What's next
 
 <CardGroup cols={2}>
   <Card title="Customer install" icon="download" href="/release/customer-install">
-    How a customer admin consumes your published pack.
+    How a customer admin consumes a git-native pack.
   </Card>
   <Card title="Local dev and testing" icon="flask" href="/dev/local-dev-and-testing">
     Test before you push.

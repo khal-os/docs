@@ -1,37 +1,39 @@
 ---
 title: "Install dependencies"
-description: "Which package manager to use where — pnpm for the SDK workspace, bun for pack-* repos — and the commands that get everything compiling."
+description: "Which package manager to use where — pnpm for app-kit and current khal-new app repos, bun only where an older repo already commits Bun metadata."
 ---
 
-KhalOS uses two package managers on purpose. The **SDK workspace** (the `@khal-os/*` packages you'll import into your pack) is a `pnpm` monorepo. Each **`pack-*` repo** (including `pack-template`) is a `bun` workspace. Knowing which tool runs where is the only setup detail that trips up first-time contributors.
+KhalOS uses package managers by repo contract. The **app-kit workspace** publishes the framework packages and the `khal` CLI. Current apps scaffolded with `khal new` use the package manager emitted in their next-steps output; older pack repos may still be Bun workspaces. When in doubt, follow the lockfile and scripts committed in the repo you are editing.
 
 ## TL;DR
 
 <CardGroup cols={2}>
   <Card title="pnpm" icon="box">
-    For the `@khal-os/*` SDK workspace. `pnpm install`, `pnpm build`, `pnpm typecheck`, `pnpm lint`.
+    For the app-kit framework workspace. `pnpm install`, `pnpm build`, `pnpm typecheck`, `pnpm lint`.
   </Card>
-  <Card title="bun" icon="bolt">
-    For every `pack-*` repo (the scaffold you clone from `pack-template`). `bun install`, `bun run build`, `bun run typecheck`.
+  <Card title="pnpm in new app repos" icon="box-open">
+    Current `khal new app` output says `pnpm install`, then `khal start`. Build with the repo's scripts, for example `pnpm build` when the scaffold exposes `"build": "khal build"`.
+  </Card>
+  <Card title="bun in older pack repos" icon="bolt">
+    Use Bun only where the repo already commits Bun metadata and scripts. Typical older commands are `bun install`, `bun run build`, `bun run typecheck`.
   </Card>
 </CardGroup>
 
 ## Node version
 
-Install **Node 20 or newer**. The `@khal-os/*` packages target modern Node and `bun` itself installs cleanly on 20.x. If you use `nvm`, run `nvm use` inside any repo that ships an `.nvmrc`.
+Install **Node 20 or newer**. The app-kit packages target modern Node, and both `pnpm` and `bun` install cleanly on 20.x. If you use `nvm`, run `nvm use` inside any repo that ships an `.nvmrc`.
 
 ```bash
 node --version   # v20.x or newer
 pnpm --version   # any recent release
-bun --version    # 1.x
+bun --version    # 1.x, only needed for repos that already use Bun
 ```
 
-## The SDK workspace — `pnpm`
+## The app-kit workspace — `pnpm`
 
-The SDK workspace ships the four framework packages your pack will depend on: `@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`, and `@khal-os/dev-cli`. It uses `pnpm` and Turbo under the hood.
+The app-kit workspace ships the framework packages your pack will depend on (`@khal-os/sdk`, `@khal-os/ui`, `@khal-os/types`) plus the `@khal-os/app-kit` package that exposes the `khal` CLI. It uses `pnpm` and Turbo under the hood.
 
 <CodeGroup>
-
 ```bash pnpm
 pnpm install        # install workspace deps
 pnpm build          # turbo run build — build every package
@@ -39,29 +41,30 @@ pnpm typecheck      # turbo run typecheck across the workspace
 pnpm lint           # biome check
 pnpm lint:fix       # biome check --write .
 ```
-
 </CodeGroup>
 
-You usually don't need to run these yourself: the packages publish from CI to GitHub Packages, and your pack consumes them as ordinary npm dependencies. Install them here only if you're debugging an SDK issue or running a local snapshot of the SDK against your pack.
+Those framework packages may be consumed as npm dependencies by pack/app repos. That does not make `pack-*` repos npm packages; pack identity and install content remain git-native.
 
-## Pack repos — `bun`
+## Pack/app repos — follow the scaffold
 
-Every `pack-*` repo — including the scaffold you clone from `pack-template` — uses `bun` as both its package manager and its runtime. `bun install` is fast, workspaces are first-class, and the included bundler already matches the toolchain the template expects.
+Current `khal new app <name>` output tells you to run `pnpm install` and then `khal start`. The generated root `package.json` exposes `"dev": "khal dev"` and `"build": "khal build"`, so use the package manager that installs the root workspace and then run the scripts it provides.
 
 <CodeGroup>
-
-```bash bun
-bun install         # install pack deps
-bun run build       # build the frontend package
-bun run typecheck   # type-check all workspaces
-bun run lint        # biome lint
-bun run test        # run tests (if present)
+```bash Current khal new app
+pnpm install        # install app deps, as emitted by current scaffold next steps
+pnpm build          # runs khal build through the generated package.json script
+khal start          # start the local KhalOS dev loop
 ```
 
+```bash Older Bun pack repo
+bun install         # install deps when the repo already uses Bun
+bun run build       # build using that repo's existing script
+bun run typecheck   # type-check if the repo defines the script
+```
 </CodeGroup>
 
 <Callout type="warning">
-  Don't cross the streams. Running `pnpm install` inside a `pack-*` repo, or `bun install` inside the SDK workspace, will produce a lockfile the other tool ignores — and the next person on the repo will have to untangle it. When in doubt, check which lockfile is already committed.
+  Don't cross the streams. Running `bun install` in a pnpm scaffold, or `pnpm install` in an older Bun-only pack repo, can produce a lockfile the repo does not use. When in doubt, check which lockfile and scripts are already committed.
 </Callout>
 
 ## Verifying your setup
@@ -69,7 +72,7 @@ bun run test        # run tests (if present)
 After you've cloned the workspace, pick one of each and confirm both install cleanly:
 
 <Steps>
-  <Step title="SDK workspace">
+  <Step title="App-kit workspace">
     ```bash
     cd repos/app-kit
     pnpm install && pnpm build
@@ -78,18 +81,19 @@ After you've cloned the workspace, pick one of each and confirm both install cle
     `pnpm build` should finish with every package green in the Turbo summary.
   </Step>
 
-  <Step title="A reference pack">
+  <Step title="A scaffolded pack/app">
     ```bash
-    cd repos/pack-template
-    bun install && bun run build
+    khal new app hello-fde
+    cd hello-fde
+    pnpm install && pnpm build
     ```
 
-    `bun run build` should emit CJS + ESM + `.d.ts` outputs into `package/dist/`.
+    `pnpm build` should run the scaffold's `khal build` script and emit bundle outputs into `package/dist/` when the current build pipeline is available.
   </Step>
 </Steps>
 
 <Frame>
-  ![Split terminal showing pnpm install in app-kit on the left and bun install in pack-template on the right, both finishing green.](/images/getting-started/pnpm-bun-split.png)
+  ![Split terminal showing pnpm install in app-kit on the left and pnpm install in a khal new app repo on the right, both finishing green.](/images/getting-started/pnpm-bun-split.png)
 </Frame>
 
 ## Next steps
@@ -99,6 +103,6 @@ After you've cloned the workspace, pick one of each and confirm both install cle
     Scaffold a new pack with `khal new app <name>` and get a "Hello FDE" component shipping.
   </Card>
   <Card title="Pack anatomy" href="/packs/anatomy-of-a-pack">
-    A directory-level tour of everything inside a pack — manifest, frontend package, backend service, Helm chart, CI.
+    A directory-level tour of everything inside a pack — manifest, frontend source, backend service, Helm chart, CI.
   </Card>
 </CardGroup>

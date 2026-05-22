@@ -1,9 +1,13 @@
 ---
 title: "khal-app.json"
-description: "The manifest file at the root of every pack — what the platform reads to install, run, and route your pack. Required fields, optional fields, and two worked examples."
+description: "The manifest file at the root of every git-native pack — what the platform reads to install, run, and route your pack."
 ---
 
-`khal-app.json` is the manifest every pack ships at its repo root. The platform reads it once at install time and from then on knows your pack's identity, the permissions it requires, the frontend bundle to load, and the backend service (if any) to run. The schema is defined by `@khal-os/types` and validated with Zod, so mistakes are caught at build time rather than in production.
+`khal-app.json` is the manifest every pack ships at its repo root. The platform reads it at install time and learns your pack's identity, permissions, frontend bundle path, and backend service (if any). The schema is defined by `@khal-os/types` and validated with Zod, so mistakes are caught at build time rather than in production.
+
+<Warning>
+Pack/app installs are git-native. New pack manifests should not declare npm package identity fields; use `bundlePath` for the built frontend bundle when needed.
+</Warning>
 
 ## Required fields
 
@@ -11,6 +15,7 @@ Every pack manifest must declare these fields. The build will fail if any are mi
 
 | Field | Type | What it is |
 |---|---|---|
+| `kind` | `"app" \| "service" \| "workflow"` | The manifest kind. Use `"app"` for user-facing packs. |
 | `id` | `string` | Stable identifier — lowercase, hyphen-separated. Used for NATS subjects, install paths, and log lines. |
 | `name` | `string` | Human-readable name shown in the launcher and window title. |
 | `version` | `string` | Semantic version of the pack (`1.0.0`). Bumped on every release. |
@@ -20,7 +25,7 @@ Every pack manifest must declare these fields. The build will fail if any are mi
 | `permissions` | `string[]` | The capabilities the pack needs (`nats:publish`, `files:read`, etc.). Declare the minimum — the platform enforces the list at runtime. |
 
 <Callout type="info">
-  For a pack with a single frontend view (the common case), you'll also set `frontend.package` to the npm name your pack publishes. It's technically optional in the schema because bundle packs use `apps[]` instead — but you'll include it in 95% of packs.
+  Current `@khal-os/types` still accepts the legacy `frontend` object for backward compatibility, but `validatePackInstallPolicy` rejects package identity in pack/app repos. Public docs should teach the git-native policy: no package identity field in new pack manifests.
 </Callout>
 
 ## Optional fields
@@ -29,12 +34,13 @@ These fields unlock additional pack shapes. You only declare what your pack need
 
 | Field | When to use it |
 |---|---|
-| `frontend.package` | The npm package your pack publishes (`@khal-os/pack-<name>`). Required for single-app packs. |
+| `bundlePath` | Relative path to the built ESM frontend bundle, such as `package/dist/index.mjs`. |
 | `services[]` | Declare long-running processes your pack runs. Each entry names a process, its entry point, health check, and ports. |
 | `windows[]` | Default window sizes and titles for the shell. Override per-view dimensions here. |
 | `backend` | For packs that ship a container image — names the image, Helm chart, env vars, and ports. |
-| `apps[]` | For **bundle packs** that ship multiple frontend apps in one repo. Each entry has its own `id`, `name`, and `frontend.package`. When present, the root `frontend` is ignored. |
+| `apps[]` | For bundle packs that ship multiple frontend apps in one repo. Follow the current bundle install contract and avoid per-app npm package identities in new manifests. |
 | `sandbox` | For packs that require a per-user container on install. Declares CPU, memory, and volume mounts. |
+| `defaultScope` / `allowedScopes` | Scopes the app supports at install time. Defaults are supplied by the schema, but explicit scopes make review easier. |
 
 Every optional field has a deep dive in the exhaustive [khal-app.json schema reference](/reference/khal-app-json-schema) — bookmark it when you start declaring services or sandboxes.
 
@@ -42,61 +48,62 @@ Every optional field has a deep dive in the exhaustive [khal-app.json schema ref
 
 <Tabs>
   <Tab title="Frontend-only">
-    The minimum viable manifest — what you get from `pack-template` after renaming. No backend, no services, one frontend package.
+    The minimum viable manifest from a current `khal new`-style app: no backend, no services, one frontend bundle.
 
     ```json khal-app.json
     {
       "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "kind": "app",
       "id": "<name>",
       "name": "<Name>",
       "version": "1.0.0",
       "icon": "./package/src/assets/icon.svg",
       "description": "A KhalOS pack",
       "author": "KhalOS Core Team",
+      "defaultScope": "user",
+      "allowedScopes": ["user", "shared"],
       "permissions": [],
-      "frontend": {
-        "package": "@khal-os/pack-<name>"
-      }
+      "bundlePath": "package/dist/index.mjs"
     }
     ```
 
-    Source: the scaffold in `pack-template`.
+    Source: current git-native app policy and schema support for `bundlePath`.
   </Tab>
 
   <Tab title="Full-stack">
-    A pack with both a frontend package and a backend service image. The `permissions` list names the capabilities the pack uses; the `backend` block points the platform at the container image and chart.
+    A pack with both a frontend bundle and a backend service image. The `permissions` list names the capabilities the pack uses; the `backend` block points the platform at the container image and chart.
 
     ```json khal-app.json
     {
       "$schema": "https://raw.githubusercontent.com/khal-os/app-kit/dev/packages/types/src/khal-app-schema.json",
+      "kind": "app",
       "id": "terminal",
       "name": "Terminal",
       "version": "1.0.0",
       "icon": "./package/src/assets/icon.svg",
       "description": "PTY terminal emulator for KhalOS with NATS-bridged stdin/stdout",
       "author": "KhalOS Core Team",
+      "defaultScope": "user",
+      "allowedScopes": ["user", "shared"],
       "permissions": ["pty:spawn", "nats:publish", "nats:subscribe"],
-      "frontend": {
-        "package": "@khal-os/pack-terminal"
-      },
+      "bundlePath": "package/dist/index.mjs",
       "backend": {
         "image": "ghcr.io/khal-os/pack-terminal-service",
         "helmChart": "oci://ghcr.io/khal-os/charts/pack-terminal",
         "env": {
-          "KHAL_PTY_SHELL": "/bin/bash",
-          "KHAL_NATS_URL": "nats://nats.khal-system.svc:4222"
+          "KHAL_PTY_SHELL": "/bin/bash"
         },
         "ports": [8002]
       }
     }
     ```
 
-    Source: the `pack-terminal` reference pack.
+    Source: the full-stack pattern updated for git-native installs.
   </Tab>
 </Tabs>
 
 <Frame>
-  ![Annotated khal-app.json with arrows from each field to the runtime component it configures — id to launcher, permissions to capability gate, frontend.package to the shell loader, backend to the Kubernetes workload.](/images/packs/khal-app-json-annotated.png)
+  ![Annotated khal-app.json with arrows from each field to the runtime component it configures — id to launcher, permissions to capability gate, bundlePath to the shell loader, backend to the Kubernetes workload.](/images/packs/khal-app-json-annotated.png)
 </Frame>
 
 ## Permissions: declare the minimum
@@ -111,11 +118,11 @@ Common permissions include `nats:publish`, `nats:subscribe`, `files:read`, `file
 
 ## Secrets: declare, don't embed
 
-Never put secrets directly in `khal-app.json`. The manifest is committed to git and published as part of your pack. Instead, declare what your pack needs and let the platform provide the values at runtime — through the `backend.env` block (for non-sensitive config) or via the platform's secret store (for credentials).
+Never put secrets directly in `khal-app.json`. The manifest is committed to git and read as part of your pack. Instead, declare what your pack needs and let the platform provide the values at runtime — through the `backend.env` block for non-sensitive config or via the platform's secret store for credentials.
 
 ## Validation
 
-The toolchain validates your manifest on every build. If a required field is missing, a type is wrong, or a permission name is unrecognized, you'll see a clear Zod error with the field path before the build proceeds. There's no way to publish a pack with a malformed manifest.
+The toolchain validates your manifest on every build. If a required field is missing, a type is wrong, or a permission name is unrecognized, you'll see a clear Zod error with the field path before the build proceeds. Policy checks also reject npm-publish metadata in pack/app repos.
 
 ## Next steps
 
