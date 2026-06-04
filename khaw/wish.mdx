@@ -1,0 +1,101 @@
+---
+title: "KHAW /wish and /brainstorm"
+description: "Use the KHAW Hermes slash commands to create Brain-canonical work, inspect Purpose Sessions, and run prompt-only council brainstorms."
+---
+
+KHAW treats serious work as a **Wish**: a Brain-canonical folder with `PURPOSE_SPEC.yaml`, `WISH.md`, `STATUS.md`, evidence, and eventually a board/work registry projection. A newly hired FDE should not keep mission truth only in chat. Put it in Brain, then let the agent continue from those files.
+
+## When to use `/wish`
+
+Use `/wish` when you need to:
+
+- list active Purpose Sessions/Wishes already present in `brain/wishes/`;
+- inspect the state, canonical path, board slug, and required files for a Wish;
+- create a safe local scaffold before filling the full contract;
+- give another KHAW/Hermes agent a durable starting point after context reset.
+
+Do **not** use `/wish new` to create real customer credentials, enroll codes, DNS, production deploys, or traffic changes. It only creates local Brain files.
+
+## Slash command quick reference
+
+```text
+/wish help
+/wish list
+/wish status <slug>
+/wish new <slug> --name "Human Readable Title"
+```
+
+Safe first example:
+
+```text
+/wish new first-fde-proof --name "First FDE Proof"
+/wish status first-fde-proof
+```
+
+Expected behavior:
+
+```text
+Wish created: <repo>/brain/wishes/YYYY/MM/DD/first-fde-proof
+Next: /wish status first-fde-proof
+Mutation: local Brain files only.
+```
+
+The generated scaffold is intentionally small. Fill `WISH.md` before asking agents to implement anything mutation-capable.
+
+## What `/wish new` writes
+
+Inside the active KHAW project root, it writes:
+
+```text
+brain/wishes/YYYY/MM/DD/<slug>/PURPOSE_SPEC.yaml
+brain/wishes/YYYY/MM/DD/<slug>/WISH.md
+brain/wishes/YYYY/MM/DD/<slug>/STATUS.md
+```
+
+The scaffold starts in `SPECIFIED` state and includes one first execution group: define the wish contract. That is deliberate. A KHAW agent should expand the contract with scope, deliverables, acceptance criteria, validation commands, evidence handles, and mutation boundaries before dispatching work.
+
+## When to use `/brainstorm`
+
+Use `/brainstorm` before architecture, release, onboarding, security, or agent-orchestration decisions where a single linear answer is risky.
+
+```text
+/brainstorm <topic>
+```
+
+It emits a deterministic 3-lens council prompt:
+
+1. **Architect** — propose feasible designs and constraints.
+2. **Critic** — identify hidden assumptions, security/cost risks, and failure modes.
+3. **Synthesizer** — produce one executable plan with gates and evidence.
+
+The current safe slice is **prompt-only**. It does not call paid models automatically, even if you type `--run`; it prints the prompt and explains that auto-council execution is not enabled yet.
+
+## Agent handoff loop
+
+After `/brainstorm`, ask your KHAW agent to preserve the result beside the relevant Wish:
+
+```text
+TASK: Attach this council output to the Brain Wish at brain/wishes/YYYY/MM/DD/<slug>/BRAINSTORM_SESSION.md. Then update WISH.md and STATUS.md with the accepted plan, explicit mutation boundary, validation commands, and evidence handles. Do not start mutation-capable work until the contract says what would prove success.
+```
+
+## FDE safety checklist
+
+Before a Wish moves from `SPECIFIED` to real work, confirm:
+
+- the slug is lowercase and specific;
+- `WISH.md` names **IN** and **OUT** scope;
+- each execution group has deliverables, acceptance criteria, validation, and `depends-on`;
+- secrets and private customer URLs are not pasted into public docs or tickets;
+- any real credential/customer/prod side effect has an explicit approval gate;
+- tests or dry-run commands exist for the first safe proof.
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `khaw/wish.mdx` (KHAW /wish and /brainstorm) to create or inspect a Brain-canonical Wish safely.
+CONTEXT: I am a KHAL FDE. Prefer current slash-command output and file contents over memory. Keep secrets, enrollment codes, customer URLs, and private access tokens out of public artifacts.
+SAFE FIRST COMMANDS: Start with `/wish help`, `/wish list`, `/wish status <slug>`, or `/brainstorm <topic>`. If creating a new Wish, use `/wish new <slug> --name "Title"` and then fill the contract before mutation.
+EVIDENCE: Return the canonical Brain path, files created or inspected, current state, board slug if any, and the next safe validation command. If the next step creates credentials, touches production/customer systems, or spends model budget, stop and ask for an explicit approval gate.
+```
+
+</Accordion>
