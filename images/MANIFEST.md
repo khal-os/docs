@@ -37,7 +37,7 @@ Update this file in lock-step when you add / remove `<Frame>` calls — if an op
 
 | Save as | Used in | Setup | Shot |
 |---|---|---|---|
-| `images/khal-dev-qa.png` | `dev/local-dev-and-testing.mdx` | From a terminal outside the shell, run `khal-dev qa health` against a local pack | The `khal-dev qa` CLI output — PASS/FAIL lines, with some variety if possible |
+| `images/khal-dev-qa.png` | `dev/local-dev-and-testing.mdx` | From a terminal outside the shell, run current `khal` doctor/install dry-run/status commands against a local pack | The `khal` CLI output — PASS/FAIL lines, with some variety if possible |
 
 ### Brain (pre-existing section, retained)
 

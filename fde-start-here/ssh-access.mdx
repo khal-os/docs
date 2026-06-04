@@ -1,0 +1,65 @@
+---
+title: "SSH, Gitea, and LXC access"
+description: "Set up source-control and workstation access without leaking keys, tokens, or private topology."
+---
+
+FDEs often need access to private Gitea repos and one or more Linux workstations/LXCs. Treat access as a permissioned environment, not as a shortcut around the platform.
+
+## Generate or locate your SSH key
+
+```bash
+ls -la ~/.ssh/*.pub 2>/dev/null || true
+ssh-keygen -t ed25519 -C "<your-company-email>" -f ~/.ssh/id_ed25519 -N ""
+cat ~/.ssh/id_ed25519.pub
+```
+
+Paste only the **public** key into the internal Gitea or access request UI. Never paste private keys, tokens, credential-helper contents, or raw enrollment codes.
+
+## Verify Gitea source access
+
+```bash
+tea login list
+tea whoami
+git ls-remote <private-khal-gitea-repo-url>
+```
+
+A successful `git ls-remote` proves source-control access without cloning secrets or printing repo contents.
+
+## Verify SSH/LXC access
+
+Use the alias or host from your onboarding plan:
+
+```bash
+ssh <fde-lxc-alias> 'hostname; whoami; pwd; git --version; docker --version || true'
+```
+
+Expected transcript shape:
+
+```text
+fde-caio-lxc
+caio
+/home/caio
+git version 2.x.x
+Docker version 2x.x.x, build ...
+```
+
+If the alias is missing, do not guess private IPs. Ask KHAW to inspect the onboarding plan and produce an access request.
+
+## Record a safe proof
+
+```bash
+ssh <fde-lxc-alias> 'date -u; hostname; command -v khal || true; command -v khaw || true'
+```
+
+Good proof says which host answered and which CLIs are present. It does not expose tokens, internal inventories, or customer secrets.
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `fde-start-here/ssh-access.mdx` (SSH, Gitea, and LXC access) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+```
+
+</Accordion>

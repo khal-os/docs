@@ -8,11 +8,10 @@
 docs/
 ├── docs.json              # Site config: navigation, branding, redirects
 ├── index.mdx              # Landing page
-├── quickstart.mdx         # Getting-started walkthrough
-├── development.mdx        # Local dev + contribution guide
-├── ai-tools/              # AI-focused guides (Claude, etc.)
-├── api-reference/         # API docs (OpenAPI-driven where possible)
-├── essentials/            # Core concepts + how-tos
+├── index.mdx              # START HERE landing page
+├── fde-start-here/        # Day 0 enrollment/toolchain/access pages
+├── dev/                   # FDE CLI, environment ladder, source control, local dev
+├── khaw/                  # KHAW, Khortex, model credential docs
 ├── brain/                 # @khal-os/brain user docs
 ├── snippets/              # Reusable MDX snippets
 ├── images/                # Static images
