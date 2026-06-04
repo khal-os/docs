@@ -11,16 +11,17 @@ A pack is a self-contained KhalOS app: a frontend React package plus an optional
 
 ## 1. Scaffold with `khal new`
 
-`@khal-os/app-kit` ships the public `khal` CLI. Install it from npmjs, verify the version/template bundle, then scaffold locally.
+The KHAL-owned AppKit installer ships the public `khal` CLI. Install it, verify the version/template bundle, then scaffold locally.
 
 ```bash
-npm install --global @khal-os/app-kit@latest
+curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
+sh khal-app-kit-installer.sh
 khal --version
 khal new --list
 ```
 
 <Note>
-  Use `@khal-os/app-kit@next` only when a release owner explicitly asks you to validate an unreleased CLI fix. Fresh FDE installs should use `@latest`.
+  Use another channel only when a release owner explicitly asks you to validate an unreleased CLI fix. Fresh FDE installs should use the default official installer path.
 </Note>
 
 For target login, install dry-runs, and CLI troubleshooting, see [FDE CLI quickstart](/dev/fde-cli-quickstart).
@@ -45,7 +46,7 @@ Replace `<name>` with your pack's identifier — lowercase, hyphen-separated, an
 | `--list` | Print bundled template versions and exit. |
 
 <Callout type="info">
-  The legacy GitHub-template path (using `gh repo create` against the deprecated `pack-template` repo) no longer applies. Existing packs scaffolded that way keep working unchanged — only **new** scaffolds should use `khal new`.
+  New scaffolds should use `khal new`. Existing legacy packs can keep working, but do not start a new FDE pack from a GitHub template unless a maintainer explicitly names that template.
 </Callout>
 
 ## 2. Edit the React component
@@ -142,3 +143,14 @@ You've got two paths to render your pack in a live shell:
     The end-to-end reference pattern for packs with both a frontend and a backend service.
   </Card>
 </CardGroup>
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `getting-started/your-first-pack.mdx` (Your first pack) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+```
+
+</Accordion>

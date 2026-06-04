@@ -87,7 +87,7 @@ For full-stack packs, a lightweight integration test talks to your service over 
 
 ## The `khal` developer CLI
 
-`@khal-os/app-kit` ships the public `khal` CLI. Install it from npmjs and use it for scaffolding, auth, install dry-runs, target context, doctor checks, logs, and the bundled design-system catalog.
+The KHAL-owned AppKit installer ships the public `khal` CLI. Use it for scaffolding, auth, install dry-runs, target context, doctor checks, logs, and the bundled design-system catalog.
 
 Key commands:
 
@@ -131,3 +131,14 @@ For the first-run install/login/scaffold path, start with [FDE CLI quickstart](/
     The full manifest schema.
   </Card>
 </CardGroup>
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `dev/local-dev-and-testing.mdx` (Local dev and testing) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+```
+
+</Accordion>

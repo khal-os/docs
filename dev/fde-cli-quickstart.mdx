@@ -1,65 +1,39 @@
 ---
 title: 'FDE CLI quickstart'
-description: 'Install the public khal CLI from npmjs, log in with WorkOS, scaffold a new app, validate it locally, and dry-run install before touching a target.'
+description: 'Install the official KHAL CLI, log in with WorkOS/AuthKit, scaffold a pack, validate it locally, and dry-run install before mutating a target.'
 ---
 
 This is the verified first-run path for a Field Delivery Engineer using the public `khal` CLI.
 
 <Warning>
-Install the CLI from **npmjs**. npmjs is npm's default registry, so no registry flag is normally needed. Do not configure GitHub Packages for this flow; if a GitHub Packages entry exists for app-kit, treat it as non-authoritative for FDE installs.
+  Install the CLI through the official KHAL-owned installer. Do **not** install or document the FDE CLI through npm, GitHub Packages, or raw package registries.
 </Warning>
 
 ## 0. Prerequisites
 
-Install current Node and Bun before you start:
-
 ```bash
-node --version    # Node.js 20+; Node.js 22 is used in app-kit CI
-npm --version     # npm 10+ works
-bun --version     # required by generated app/service/workflow repos
+node --version    # Node.js 20+; Node.js 22 is common in CI
+npm --version
+bun --version     # generated repos use Bun
+khaw --version    # KHAW agent/workstation harness
 ```
 
-Private KHAL app repos live in KHAL Gitea. Use the repo URL and credentials from the internal Gitea UI or onboarding note when you install from a private source. GitHub authentication is only relevant for the public docs repo and the GitHub-hosted app-kit/desktop exceptions.
+Private KHAL app repos live in KHAL Gitea. Use the repo URL and credentials from the internal Gitea UI or onboarding note when you install from a private source. GitHub authentication is only relevant for public docs and public exceptions.
 
-## 1. Install `khal` from npmjs
+## 1. Install `khal`
 
-Use the package `@khal-os/app-kit`. The binary is `khal`.
-
-<CodeGroup>
-```bash Global install
-npm install --global @khal-os/app-kit@latest
+```bash
+curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
+sh khal-app-kit-installer.sh
 khal --version
+khal --help
 ```
 
-```bash Project-local install
-npm install --save-dev @khal-os/app-kit@latest
-npx khal --version
-```
-
-```bash One-shot without installing globally
-npm exec --package @khal-os/app-kit@latest -- khal --version
-```
-</CodeGroup>
-
-The currently verified npmjs `latest` during this docs update was:
+Expected command families include:
 
 ```text
-1.0.57
-```
-
-Then inspect the available templates:
-
-```bash
-khal new --list
-```
-
-Expected shape:
-
-```text
-Bundled templates:
-  app        v1.0.57
-  service    v1.0.57
-  workflow   v1.0.57
+new, start, build, deploy, install, list, logs, link, pull,
+login, git, whoami, logout, config, target, context, doctor, update
 ```
 
 ## 2. Log in to a target
@@ -76,27 +50,22 @@ On SSH/headless/agent sessions, print the URL instead of trying to open a browse
 khal auth login --target dev --no-browser
 ```
 
-The CLI prints a WorkOS/AuthKit URL and listens for the localhost callback. It stores only the returned KhalOS session token.
-
 Verify identity and recovery state without printing secrets:
 
 ```bash
 khal auth status --target dev --json
 khal whoami --target dev --json
+khal context --target dev --text
 ```
 
-`khal auth status --json` exits 0 even when unauthenticated and prints the next login command. `khal whoami --json` exits 2 when no credential exists.
-
 ## 3. Scaffold a new app, service, or workflow
-
-For an app repo:
 
 ```bash
 khal new app my-first-app
 cd my-first-app
 ```
 
-For backend-only or workflow-first work:
+Backend-only or workflow-first work follows the same shape:
 
 ```bash
 khal new service my-first-service
@@ -106,8 +75,6 @@ khal new workflow my-first-workflow
 Generated repos are git-native KHAL apps: **repo + branch + `khal-app.json`**. Do not publish generated app repos to npm.
 
 ## 4. Build and typecheck locally
-
-Generated repos use Bun:
 
 ```bash
 bun install
@@ -142,25 +109,18 @@ For a hosted app repo, always pass an explicit branch:
 khal install <private-khal-gitea-repo-url> --branch dev --target dev --scope shared --dry-run --json
 ```
 
-## 6. Install after dry-run passes
-
-After login, permission, and a clean dry-run:
+## 6. Install only after dry-run passes
 
 ```bash
 khal install . --target dev --scope shared
 ```
 
-For a hosted repo:
-
-```bash
-khal install <private-khal-gitea-repo-url> --branch dev --target dev --scope shared
-```
-
-If the target denies the mutation, ask for the permission named by the CLI. The current install path usually requires `os.marketplace.install`.
+If the target denies the mutation, ask for the permission named by the CLI. The current install path usually requires marketplace/install permission for the target organization.
 
 ## 7. Useful proof commands
 
 ```bash
+khal target list --json
 khal context --target dev --text
 khal doctor --target dev
 khal logs <app-id> --target dev --tail 50
@@ -168,7 +128,7 @@ khal status <app-id> --target dev --json
 khal open <app-id> --target dev --check --json
 ```
 
-`status` and `open` are currently hidden compatibility helpers. They are useful for proof, but they are not yet part of the public `khal --help` ladder.
+`status` and `open` may be hidden compatibility helpers in some releases. They are useful for proof, but the authoritative public ladder is `khal --help` plus the installed command output.
 
 ## Troubleshooting
 
@@ -176,18 +136,13 @@ khal open <app-id> --target dev --check --json
 
 ```bash
 which khal
-npm view @khal-os/app-kit dist-tags --json
-npm cache clean --force
-npm install --global @khal-os/app-kit@latest
+khal update --channel latest
+curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
+sh khal-app-kit-installer.sh
+khal --version
 ```
 
-### GitHub Packages shows a different version
-
-Ignore it for FDE CLI installation. npmjs is canonical for `@khal-os/app-kit`.
-
 ### Private Gitea repo fetch fails
-
-Authenticate source control through the internal Gitea path from onboarding:
 
 ```bash
 tea login list
@@ -197,22 +152,13 @@ git ls-remote <private-khal-gitea-repo-url>
 
 For SSH remotes, register your SSH key in Gitea first and use the SSH clone URL. Do not print or commit tokens, credential-helper output, or private remote URLs in public docs/issues.
 
-## What was dogfooded
+<Accordion title="🤖 Agent paste prompt">
 
-This page was written after running the path from a clean directory with npmjs `@latest`:
-
-```bash
-npm install @khal-os/app-kit@latest
-./node_modules/.bin/khal --version
-./node_modules/.bin/khal auth login --target dev --no-browser
-./node_modules/.bin/khal new app fde-demo-app
-./node_modules/.bin/khal new service fde-demo-service
-./node_modules/.bin/khal new workflow fde-demo-workflow
-# for each generated repo:
-bun install
-bun run build
-bun run typecheck
-khal install . --target dev --dry-run --json
+```text
+TASK: Use the Khal OS docs page `dev/fde-cli-quickstart.mdx` (FDE CLI quickstart) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
 ```
 
-All three generated template kinds installed dependencies, built, typechecked, and passed install dry-run with zero blocking checks.
+</Accordion>

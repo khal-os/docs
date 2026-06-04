@@ -1,49 +1,68 @@
 ---
-title: "Khal OS — the browser-based OS for agents and the humans who ship with them"
-description: "The FDE manual for building, shipping, and deploying packs on khal-os."
+title: "START HERE — Khal OS FDE manual"
+description: "Day 0 to first proof for a newly hired FDE with only an enrollment code."
 ---
 
-**Automagik builds the primitives. Khal-os runs on them.** `automagik-dev` ships the agentic development toolchain — `genie` orchestrates wishes into shipped code via autonomous teams, `omni` lets agents speak across every channel humans live in, and `rlmx` gives them a research-grade reasoning loop. `khal-os` is the operating system that hosts what those agents build — a browser-based, macOS-inspired shell where every human and every agent lives alongside the apps ("packs") they use together. Forward Deployed Engineers hired on khal-os don't rebuild the primitives; they reach for the automagik toolchain to author khal packs faster, then ship those packs into customer organisations via khal-os's deploy rails. **One story: Automagik is how you build. Khal-os is where it runs.**
+This is the first page for a newly hired Forward Deployed Engineer. Assume you have **only an enrollment code** and no company email yet. Your job is not to memorize the platform; your job is to get an account, get a workstation, install the KHAL/KHAW tools, pair with your agent, and produce a small proof safely.
 
-<Frame caption="The khal-os desktop shell with a handful of packs running.">
+<Frame caption="The Khal OS desktop shell: packs, terminal, settings, and agent-assisted work in one browser-based operating system.">
   ![The khal-os desktop shell with a handful of packs running](/images/hero-desktop.png)
 </Frame>
 
-<Note>
-  This manual is written for Forward Deployed Engineers shipping packs onto khal-os. If you're evaluating the product, start with [What is Khal-OS](/what-is-khal-os).
-</Note>
+<Callout type="warning">
+  Do not skip enrollment and access checks. If you cannot prove who you are, which target you are touching, and whether the command mutates anything, stop and ask your KHAW agent for help.
+</Callout>
 
-## Day 1 on khal-os
-
-Four steps take you from an empty laptop to a pack running in the shell.
+## Day 0 path
 
 <CardGroup cols={2}>
-  <Card title="Clone the workspace" icon="download" href="/getting-started/clone-workspace">
-    Pull the khal workspace, wire your environment, and confirm the shell boots locally.
+  <Card title="1. Redeem your enrollment code" icon="ticket" href="/fde-start-here/enrollment">
+    Turn the code into identity, email, KHAW profile, and the first support channel.
   </Card>
-  <Card title="Your first pack" icon="cube" href="/getting-started/your-first-pack">
-    Scaffold a pack from the template and see it appear in the khal-os desktop.
+  <Card title="2. Install the toolchain" icon="terminal" href="/fde-start-here/install-toolchain">
+    Install Git, Node, Bun, tea, KHAW, and the KHAL CLI from the current official paths.
   </Card>
-  <Card title="Hooks reference" icon="plug" href="/sdk/hooks-reference">
-    The `@khal-os/*` React hooks you'll reach for — auth, NATS, services, and more.
+  <Card title="3. Get SSH and environment access" icon="key" href="/fde-start-here/ssh-access">
+    Set up SSH keys, Gitea access, LXC/dev host aliases, and safe proof commands.
   </Card>
-  <Card title="Publish your pack" icon="rocket" href="/release/publish-your-pack">
-    Tag a release, push to CI, and prepare the Helm chart customers will install.
-  </Card>
-</CardGroup>
-
-## Learn by example
-
-Real patterns beat abstract advice. These pages walk through packs you can copy from.
-
-<CardGroup cols={3}>
-  <Card title="Frontend-only pack" icon="browser" href="/patterns/frontend-only-pack">
-    A pack that lives entirely in the browser shell. No backend service required.
-  </Card>
-  <Card title="Full-stack pack" icon="layer-group" href="/patterns/full-stack-pack">
-    A pack with a Bun service behind it, talking to the shell over NATS.
-  </Card>
-  <Card title="Example packs" icon="book-open" href="/reference/example-packs">
-    Reference packs you can read end-to-end to see the conventions applied.
+  <Card title="4. Build your first pack" icon="cube" href="/getting-started/your-first-pack">
+    Scaffold, build, typecheck, and dry-run a small pack before mutating any shared target.
   </Card>
 </CardGroup>
+
+## What you should know before your first ticket
+
+- **Khal OS** is where packs run: a browser-based OS shell with apps, settings, terminal, services, and customer environments.
+- **KHAW** is the FDE/agent workstation and governance harness: it installs tools, manages purpose/wish work, and gives your agent the right context.
+- **Khortex/Brain** are context and reasoning surfaces: use them to ask, retrieve, and preserve evidence instead of relying on memory.
+- **KHAL CLI (`khal`)** is the app/deploy companion. Install it from `https://install.khal.ai/app-kit`, not npm.
+- **Private engineering repos** live in KHAL Gitea. Public docs live on GitHub + Mintlify.
+
+## First proof target
+
+A new FDE's first proof is intentionally small:
+
+```bash
+khal --version
+khaw --version
+khal auth status --target dev --json
+khal new app hello-fde
+cd hello-fde
+bun install
+bun run build
+bun run typecheck
+khal install . --target dev --dry-run --json
+```
+
+If any step fails, keep the output and paste it into your KHAW agent with the prompt below.
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `index.mdx` (START HERE — Khal OS FDE manual) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+```
+
+</Accordion>

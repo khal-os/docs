@@ -171,3 +171,14 @@ Reference packs evolve. The repo READMEs are the canonical state; this page is a
     The pattern writeup of pack-terminal's shape.
   </Card>
 </CardGroup>
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `reference/example-packs.mdx` (Example packs) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+```
+
+</Accordion>

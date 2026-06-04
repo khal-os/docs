@@ -14,8 +14,12 @@
     "decoration": "gradient"
   },
   "fonts": {
-    "heading": { "family": "Geist" },
-    "body": { "family": "Geist" }
+    "heading": {
+      "family": "Geist"
+    },
+    "body": {
+      "family": "Geist"
+    }
   },
   "favicon": "/favicon.svg",
   "logo": {
@@ -25,21 +29,62 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Getting Started",
+        "tab": "START HERE",
         "groups": [
           {
-            "group": "Introduction",
+            "group": "Day 0 enrollment",
             "pages": [
               "index",
-              "what-is-khal-os"
+              "fde-start-here/enrollment",
+              "fde-start-here/install-toolchain"
             ]
           },
           {
-            "group": "Setup & Quickstart",
+            "group": "Access & environments",
             "pages": [
-              "getting-started/clone-workspace",
-              "getting-started/install-dependencies",
-              "getting-started/your-first-pack"
+              "fde-start-here/ssh-access",
+              "fde-start-here/environments"
+            ]
+          },
+          {
+            "group": "First useful work",
+            "pages": [
+              "getting-started/your-first-pack",
+              "dev/fde-cli-quickstart"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "FDE Engineer",
+        "groups": [
+          {
+            "group": "CLI & auth",
+            "pages": [
+              "dev/fde-cli-quickstart",
+              "dev/fde-environment-ladder",
+              "dev/gitea-source-control"
+            ]
+          },
+          {
+            "group": "Dev, test, release",
+            "pages": [
+              "dev/local-dev-and-testing",
+              "release/publish-your-pack",
+              "release/customer-install"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "KHAW",
+        "groups": [
+          {
+            "group": "KHAW OS",
+            "pages": [
+              "khaw/what-is-khaw",
+              "khaw/khortex",
+              "khaw/openrouter-creds"
             ]
           }
         ]
@@ -64,38 +109,12 @@
             ]
           },
           {
-            "group": "Services",
+            "group": "Services & patterns",
             "pages": [
               "services/backend-overview",
-              "services/environment-config"
-            ]
-          },
-          {
-            "group": "Patterns",
-            "pages": [
+              "services/environment-config",
               "patterns/frontend-only-pack",
               "patterns/full-stack-pack"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Ship It",
-        "groups": [
-          {
-            "group": "Dev",
-            "pages": [
-              "dev/fde-cli-quickstart",
-              "dev/fde-environment-ladder",
-              "dev/gitea-source-control",
-              "dev/local-dev-and-testing"
-            ]
-          },
-          {
-            "group": "Release",
-            "pages": [
-              "release/publish-your-pack",
-              "release/customer-install"
             ]
           }
         ]
@@ -110,25 +129,17 @@
             ]
           },
           {
-            "group": "Packs",
+            "group": "Examples",
             "pages": [
               "reference/example-packs"
             ]
           },
           {
-            "group": "SDK",
+            "group": "Original quickstarts",
             "pages": [
-              "sdk/hooks-reference",
-              "sdk/useNats",
-              "sdk/useKhalAuth",
-              "sdk/useService"
-            ]
-          },
-          {
-            "group": "Services",
-            "pages": [
-              "services/backend-overview",
-              "services/environment-config"
+              "what-is-khal-os",
+              "getting-started/clone-workspace",
+              "getting-started/install-dependencies"
             ]
           }
         ]

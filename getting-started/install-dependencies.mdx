@@ -20,13 +20,14 @@ KhalOS uses two package managers on purpose. The **app-kit workspace** (the `@kh
 
 Install **Node 20 or newer**. The `@khal-os/*` packages target modern Node and `bun` itself installs cleanly on 20.x. If you use `nvm`, run `nvm use` inside any repo that ships an `.nvmrc`.
 
-The `khal` binary comes from `@khal-os/app-kit` on npmjs. Fresh FDE installs should use `@latest`; use `@next` only when a release owner explicitly asks you to validate an unreleased CLI fix.
+The `khal` binary is installed through the KHAL-owned AppKit installer. Do not install or document the FDE CLI through npm/package registries.
 
 ```bash
 node --version   # v20.x or newer
 pnpm --version   # any recent release
 bun --version    # 1.x
-npm install --global @khal-os/app-kit@latest
+curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
+sh khal-app-kit-installer.sh
 khal --version
 ```
 
@@ -46,7 +47,7 @@ pnpm lint:fix       # biome check --write .
 
 </CodeGroup>
 
-You usually don't need to run these yourself: the shared packages publish from CI to **npmjs**, and your pack consumes them as ordinary npm dependencies. Install them here only if you're debugging an SDK issue or running a local snapshot of the SDK against your pack.
+You usually don't need to run the SDK workspace yourself. FDEs consume the vendored AppKit installer and generated pack templates. Work in the AppKit `pnpm` workspace only if you're debugging SDK internals or validating a release branch.
 
 ## Pack repos — `bun`
 
@@ -107,3 +108,14 @@ After you've cloned the workspace, pick one of each and confirm both install cle
     A directory-level tour of everything inside a pack — manifest, frontend package, backend service, Helm chart, CI.
   </Card>
 </CardGroup>
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `getting-started/install-dependencies.mdx` (Install dependencies) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
+SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
+EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+```
+
+</Accordion>
