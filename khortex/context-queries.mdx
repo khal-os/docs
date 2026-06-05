@@ -1,0 +1,39 @@
+---
+title: "Khortex context queries"
+description: "Prompt patterns for asking Brain/Khortex for current project context before mutating systems."
+---
+
+Khortex/Brain are useful when you ask for sourced current truth, not generic advice.
+
+## Basic query
+
+```text
+Find current context for <repo/project/customer/work>. Return only sourced facts, source handles, open risks, and the next safe command. If the source is stale or missing, say so.
+```
+
+## Release query
+
+```text
+Before release, fetch current branch/ref, PR/CI/deploy evidence, target environment, rollback path, and customer/prod boundary. Return GO/NO-GO with proof handles.
+```
+
+## FDE onboarding query
+
+```text
+For identity <identity>, inspect the onboarding receipt and KHAW/FDE docs. Tell me which of email, Gitea, LXC, KHAW, KHAL, SSH, and model access is proven, pending, or blocked.
+```
+
+## Answer quality checklist
+
+A good answer includes source handles, timestamps when relevant, current commands, and limitations. A bad answer relies on memory or invents missing URLs/secrets.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khortex/context-queries.mdx` (Khortex context queries). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

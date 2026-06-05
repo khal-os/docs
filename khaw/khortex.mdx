@@ -12,11 +12,7 @@ Khortex is the reasoning and context layer around KHAL work. For an FDE, the imp
 - you need to preserve a decision or evidence trail;
 - your agent needs context from Brain/KHAW rather than from chat memory.
 
-## Current KHAW plugin surface
-
-KHAW exposes a Brain ask tool through the Hermes plugin when the local Brain API is available. The tool sends a question to the Brain API and returns structured events/answers. It does not own the Brain runtime.
-
-Safe prompt pattern:
+## Safe prompt pattern
 
 ```text
 Ask Brain/Khortex for current context on <project/work>. Return:
@@ -33,17 +29,17 @@ For major FDE decisions, use a 3-lens council:
 
 1. **Architect** — feasible designs and constraints.
 2. **Critic** — risks, security, cost, and failure modes.
-3. **Synthesizer** — a single executable plan with gates.
+3. **Synthesizer** — one executable plan with gates.
 
-KHAW's `/brainstorm` slash command formalizes this as an agent-first prompt/council entry point. The current safe slice is prompt-only: it prints the three council lenses and tells the agent where to save the result, but it does not spend model budget automatically.
+KHAW's `/brainstorm` command formalizes this as an agent-first council entry point. For details, see [Council pattern](/khortex/council-pattern) and [Context queries](/khortex/context-queries).
 
-<Accordion title="🤖 Agent paste prompt">
+<Accordion title="🤖 Paste this to your KHAW agent">
 
 ```text
-TASK: Use the Khal OS docs page `khaw/khortex.mdx` (Khortex and Brain context) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
-CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
-SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
-EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+TASK: I am reading `khaw/khortex.mdx` (Khortex and Brain context). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
 ```
 
 </Accordion>

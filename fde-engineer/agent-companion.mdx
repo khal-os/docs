@@ -1,0 +1,49 @@
+---
+title: "Working with your KHAW agent"
+description: "A junior FDE guide to using KHAW as a companion: context, verification, evidence, and safe gates."
+---
+
+Your agent should make you faster without making you dangerous. Treat it as a pair engineer that must prove what it says.
+
+## The perfect first instruction
+
+```text
+You are my KHAW FDE companion. Read the current docs page and verify my machine state before recommending action. Use read-only checks and dry-runs first. Never mutate customer, HML, prod, secrets, SSH, Gitea, or model-provider state without my explicit GO. Return evidence, not vibes.
+```
+
+## Ask it to fetch context
+
+```text
+Before answering, fetch:
+1. the docs page I am following;
+2. relevant repo files and CLI `--help` output;
+3. Brain/Khortex context if the work touches architecture or a Purpose Session;
+4. current git branch/ref and dirty state.
+```
+
+## Ask it to produce access requests
+
+If blocked, the agent should write a precise request:
+
+```text
+I need <permission> for <identity> on <target>. Current proof: <sanitized command output>. Requested action: <grant/confirm/provision>. Do not include raw secrets.
+```
+
+## Agent red flags
+
+- It cannot name the target.
+- It says "done" without output.
+- It asks you to paste secrets.
+- It suggests raw Kubernetes/Helm/SSH mutation before KHAL/KHAW CLI proof.
+- It cannot explain whether a command mutates.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `fde-engineer/agent-companion.mdx` (Working with your KHAW agent). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

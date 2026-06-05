@@ -1,70 +1,73 @@
 ---
 title: "Enrollment code to active FDE"
-description: "Redeem an enrollment code, receive company identity, and prove your first KHAW-ready account state."
+description: "Turn a pre-email enrollment state into a traceable identity, provisioning receipt, and safe next access requests."
 ---
 
-You may start with only an enrollment code. That code is enough to begin, but it is not enough to mutate systems. The goal of enrollment is to create a traceable identity and route you to the right access requests.
+You may start with only an enrollment code. That code is enough to begin onboarding, but it is not enough to mutate systems. The current KHAW CLI path is **provision and verify**, not a live `enroll` subcommand.
 
-## What enrollment should give you
-
-- A company identity record tied to your real person.
-- A company email or the ticket proving email is being provisioned.
-- A KHAW profile/workstation record.
-- The first support channel and owner for blocked access.
-- A list of credentials that still need human/operator approval.
-
-<Callout type="info">
-  KHAW can produce the onboarding plan before email exists. Treat that plan as the source of truth for what access is pending, not as proof that access has already been granted.
+<Callout type="warning">
+  Do not paste the raw enrollment code into public docs, screenshots, GitHub issues, or agent outputs. Redact it and keep only the provisioning receipt shape.
 </Callout>
 
-## Redeem and verify
+## If email does not exist yet
+
+Use the canonical local-part that should become the company email:
 
 ```bash
-# The exact redeem command may be provided in your hiring note.
-# Keep the code private; never paste it into a public issue or screenshot.
-khaw fde enroll --code <enrollment-code> --dry-run
-khaw fde provision --code <enrollment-code> --dry-run --json
-khaw fde verify --json
+khaw fde provision   --full-name "<Full Name>"   --email-local <firstname.lastname>   --domain namastex.ai   --role fde   --dry-run   --json   --out ./fde-provision.receipt.json
 ```
 
-Expected result shape:
+## If email already exists
+
+```bash
+khaw fde provision   --full-name "<Full Name>"   --email <you@company-domain>   --role fde   --dry-run   --json   --out ./fde-provision.receipt.json
+```
+
+Expected receipt shape:
 
 ```json
 {
-  "fde": "your-name",
-  "email": { "status": "pending-or-active" },
-  "workspace": { "status": "planned-or-ready" },
-  "next_actions": ["request Google Workspace", "register SSH key"]
+  "subject": { "identity": "firstname.lastname", "email": "firstname.lastname@namastex.ai", "role": "fde" },
+  "resource_profile": { "cpu": "4", "ram": "16GiB", "disk": "160GiB" },
+  "required_approvals": ["email", "gitea", "lxc", "model_provider"],
+  "mutation": "none"
 }
 ```
 
-## If you do not have email yet
+## Verify against the receipt
 
-Ask for exactly this, and include your enrollment proof without the raw code:
+```bash
+khaw fde verify --from ./fde-provision.receipt.json --dry-run --json
+```
+
+Good verification should prove identity and expected machine/access fields without changing remote state.
+
+## Ask for the exact missing package
 
 ```text
-I have redeemed my KHAL FDE enrollment code. Please provision or confirm:
+I have a KHAL FDE provisioning receipt. Please provision or confirm:
 1. company email account;
-2. Gitea account/group membership;
+2. KHAL/Gitea account and groups;
 3. KHAW profile/workstation binding;
-4. SSH/LXC access route;
-5. OpenRouter or approved model-provider credential route.
+4. clean-room LXC/SSH access route;
+5. OpenRouter/model-provider route and budget policy.
+Raw enrollment code is redacted. Receipt is attached or summarized.
 ```
 
 ## Evidence to keep
 
-- Command used, with enrollment code redacted.
-- `khaw fde verify --json` output.
-- The access owner/channel returned by the onboarding plan.
-- Any ticket ID or approval message for email, SSH, Gitea, or model credentials.
+- `khaw fde provision ... --dry-run --json` output with private values redacted.
+- The local `./fde-provision.receipt.json` file kept private.
+- `khaw fde verify --from ... --dry-run --json` output.
+- Ticket/owner/channel for each pending approval.
 
-<Accordion title="🤖 Agent paste prompt">
+<Accordion title="🤖 Paste this to your KHAW agent">
 
 ```text
-TASK: Use the Khal OS docs page `fde-start-here/enrollment.mdx` (Enrollment code to active FDE) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
-CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
-SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
-EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+TASK: I am reading `fde-start-here/enrollment.mdx` (Enrollment code to active FDE). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
 ```
 
 </Accordion>

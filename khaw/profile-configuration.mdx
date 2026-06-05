@@ -1,0 +1,49 @@
+---
+title: "KHAW profile configuration"
+description: "What a KHAW/Hermes profile is, where configuration belongs, and how to verify it safely."
+---
+
+A KHAW profile is the local agent runtime configuration for one FDE/workstation/persona. It may include Hermes config, model routing, plugin enablement, skills, and environment references.
+
+## What belongs in a profile
+
+- Hermes provider/model routing.
+- KHAW plugin enablement.
+- Safe environment-file references.
+- Profile-specific skills/plugins/memory.
+- Desktop/dashboard connection settings when configured.
+
+## What does not belong in public docs
+
+- Raw OpenRouter/API keys.
+- Private SSH keys.
+- Customer secrets.
+- Private repo tokens.
+- Raw enrollment codes.
+
+## Verify without leaking
+
+```bash
+khaw --version
+khaw doctor
+khaw auth status
+khaw context doctor
+khaw desktop status --json
+```
+
+For Hermes-side provider checks, use the installed Hermes commands on your machine and report only whether a secret is configured, never the value.
+
+## If model access is missing
+
+Use [Model and OpenRouter credentials](/khaw/openrouter-creds) and ask your onboarding owner for the approved route and budget.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khaw/profile-configuration.mdx` (KHAW profile configuration). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

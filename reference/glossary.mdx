@@ -1,0 +1,36 @@
+---
+title: "Glossary"
+description: "Plain-language definitions for FDEs and their agents."
+---
+
+## Core terms
+
+- **FDE** — Forward Deployed Engineer; a person who makes KHAL work in real environments.
+- **Khal OS** — the product/runtime shell where KHAL apps, packs, services, settings, and environments are operated.
+- **KHAW** — the additive Hermes distribution and FDE workstation/agent harness.
+- **Hermes** — the upstream agent runtime substrate KHAW extends with plugins, skills, and tools.
+- **Khortex** — governed context/reasoning layer for asking sourced questions and running council reviews.
+- **Brain** — canonical context substrate for memories, wishes, evidence, and knowledge files.
+- **Wish / Purpose Session** — a durable work mission with artifacts, board state, evidence, and terminal report.
+- **Pack** — a KHAL app unit with manifest/source/runtime contract.
+- **`khal-app.json`** — pack manifest describing identity, runtime, permissions, and integration.
+- **KHAL CLI (`khal`)** — app/source/deploy/install CLI for FDEs and operators.
+- **KHAW CLI (`khaw`)** — workstation/agent/governance CLI around Hermes and KHAL work.
+- **Gitea** — private KHAL source forge.
+- **`tea`** — Gitea CLI.
+- **LXC / clean-room** — isolated Linux workstation/container assigned to an FDE.
+- **Target** — named KHAL environment such as local/dev/HML/prod.
+- **Dry-run** — command mode that verifies and reports without mutation.
+- **Mutation** — any action that changes remote state, secrets, access, deployment, customer environment, or production.
+- **OpenRouter/model provider** — approved route for model calls; never paste keys in docs or reports.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `reference/glossary.mdx` (Glossary). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

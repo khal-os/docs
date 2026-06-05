@@ -1,0 +1,33 @@
+---
+title: "Pack gallery"
+description: "Reference screenshots for common KHAL packs and what they are supposed to communicate."
+---
+
+Use pack screenshots to understand the UX target before debugging a pack's manifest or runtime.
+
+<Frame caption="Terminal pack: command output inside the Khal OS shell.">
+  ![Terminal pack preview](/images/pack-terminal-preview.png)
+</Frame>
+
+<Frame caption="Settings pack: identity/configuration surface for operators and FDEs.">
+  ![Settings pack preview](/images/pack-settings-preview.png)
+</Frame>
+
+<Frame caption="Annotated manifest anatomy for a KHAL app pack.">
+  ![Pack anatomy annotated](/images/packs/pack-anatomy-annotated.png)
+</Frame>
+
+## Agent instruction
+
+When debugging UI, ask your agent to verify both browser pixels and source/runtime truth. A screenshot alone does not prove the app is correctly installed.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `visuals/pack-gallery.mdx` (Pack gallery). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

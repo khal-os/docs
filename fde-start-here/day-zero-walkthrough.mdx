@@ -1,0 +1,207 @@
+---
+title: "Day 0 FDE walkthrough"
+description: "A single linear path from enrollment code and no email to first safe KHAL/KHAW proof."
+---
+
+Use this page when you were just hired and have only an enrollment code. Do not jump ahead. Each step tells you what to run, what success looks like, and what to paste to your agent if blocked.
+
+## 0. What the enrollment code is allowed to do
+
+The code is a **permission to start onboarding**, not proof that you already have email, SSH, Gitea, LXC, KHAL, OpenRouter, or production rights.
+
+Safe first outcome:
+
+```text
+identity local-part: caio.rodrigues
+email status: pending
+machine/LXC: planned or assigned
+model access: request needed
+mutation: none
+```
+
+## 1. If you do not have email yet
+
+Use the local-part form. Replace the name; do not publish the enrollment code.
+
+```bash
+khaw fde provision   --full-name "Caio Rodrigues"   --email-local caio.rodrigues   --domain namastex.ai   --role fde   --dry-run   --json   --out ./fde-provision.receipt.json
+```
+
+Simulated output:
+
+```json
+{
+  "subject": {
+    "identity": "caio.rodrigues",
+    "email": "caio.rodrigues@namastex.ai",
+    "role": "fde"
+  },
+  "machine": { "profile": "fde-standard", "ct": null, "ip": null },
+  "actions": [
+    "create_or_confirm_company_email",
+    "grant_gitea_group_membership",
+    "bind_khaw_profile",
+    "assign_clean_room_lxc",
+    "route_model_provider_access"
+  ],
+  "mutation": "none"
+}
+```
+
+If you already have email, use `--email <you@company>` instead of `--email-local`.
+
+## 2. Ask for the missing access package
+
+Send this with the raw enrollment code removed:
+
+```text
+I have a KHAL FDE onboarding receipt for <identity>. Please provision or confirm:
+1. company email;
+2. KHAL/Gitea user and source groups;
+3. KHAW profile/workstation binding;
+4. clean-room LXC/SSH route and hostname;
+5. approved model-provider/OpenRouter route and budget policy.
+Receipt path or sanitized JSON attached; raw enrollment code redacted.
+```
+
+## 3. Install base tools
+
+```bash
+git --version
+node --version
+bun --version
+python3 --version
+tea --version
+```
+
+Simulated output:
+
+```text
+$ node --version
+v22.x.x
+$ bun --version
+1.x.x
+$ tea --version
+tea version 0.x.x
+```
+
+## 4. Install or verify KHAW
+
+Your onboarding owner may provide the private KHAW source URL. Use the internal URL from the onboarding note, not a random public mirror.
+
+```bash
+git clone --branch dev <private-khaw-gitea-repo-url> ~/.khaw-src
+mkdir -p ~/.local/bin
+ln -sf ~/.khaw-src/bin/khaw ~/.local/bin/khaw
+export PATH="$HOME/.local/bin:$PATH"
+khaw --version
+khaw status
+khaw doctor
+```
+
+Successful shape:
+
+```text
+KHAW version: 1.0.x
+KHAW build status: ok
+Doctor: OK for native harness
+```
+
+## 5. Install KHAL CLI
+
+```bash
+curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
+sh khal-app-kit-installer.sh
+khal --version
+khal --help
+```
+
+Expected top-level families include:
+
+```text
+new, start, build, deploy, install, list, logs, link, pull,
+login, git, promote, auth, whoami, logout, config, target,
+context, doctor, dev, infra, telemetry, update
+```
+
+## 6. Log in and verify identity
+
+```bash
+khal login --target dev --no-browser
+khal whoami --target dev --json
+khal context --target dev --text
+khal doctor --target dev
+```
+
+Simulated blocked output:
+
+```text
+Auth: not signed in
+Next: open the AuthKit URL from `khal login --no-browser`
+Mutation: none
+```
+
+Simulated good output:
+
+```text
+KHAL target: dev
+Identity: caio.rodrigues@namastex.ai
+Reachability: ok
+Mutation: none
+```
+
+## 7. Verify Gitea and SSH/LXC
+
+```bash
+tea login list
+tea whoami
+git ls-remote <private-khal-gitea-repo-url>
+ssh <fde-lxc-alias> 'hostname; whoami; command -v khaw; command -v khal || true'
+```
+
+Good proof shape:
+
+```text
+<lxc-hostname>
+<linux-user>
+/home/<linux-user>/.local/bin/khaw
+/home/<linux-user>/.local/bin/khal
+```
+
+## 8. Configure model access without leaking keys
+
+```bash
+khaw fde spend --identity caio.rodrigues --json
+```
+
+If no provider route is configured yet, ask for one:
+
+```text
+Please provision model access for my KHAL FDE KHAW profile.
+Needed for: code review, docs, KHAW Purpose/Wish work, and pack development.
+Please include approved provider route, budget limits, and whether I should use profile credentials or a personal child key.
+```
+
+## 9. First useful proof
+
+```bash
+khal new app hello-fde
+cd hello-fde
+bun install
+bun run build
+bun run typecheck
+khal install . --target dev --dry-run --json
+```
+
+Do not run a non-dry-run install until the dry-run passes and your agent can explain the target, source, branch/ref, manifest, environment, and mutation.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `fde-start-here/day-zero-walkthrough.mdx` (Day 0 FDE walkthrough). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action. If any command differs on my machine, inspect `--help` before assuming the docs are wrong.
+```
+
+</Accordion>

@@ -1,0 +1,70 @@
+---
+title: "FDE command cheat sheet"
+description: "Safe-first KHAL/KHAW commands grouped by purpose."
+---
+
+## Local toolchain
+
+```bash
+khaw --version
+khaw status
+khaw doctor
+khal --version
+khal --help
+```
+
+## Identity and target
+
+```bash
+khal login --target dev --no-browser
+khal whoami --target dev --json
+khal context --target dev --text
+khal doctor --target dev
+```
+
+## Pre-email FDE receipt
+
+```bash
+khaw fde provision --full-name "<Name>" --email-local <firstname.lastname> --domain namastex.ai --role fde --dry-run --json --out ./fde-provision.receipt.json
+khaw fde verify --from ./fde-provision.receipt.json --dry-run --json
+```
+
+## Source access
+
+```bash
+tea login list
+tea whoami
+git ls-remote <private-khal-gitea-repo-url>
+khal git status --target dev
+```
+
+## First app proof
+
+```bash
+khal new app hello-fde
+cd hello-fde
+bun install
+bun run build
+bun run typecheck
+khal install . --target dev --dry-run --json
+```
+
+## KHAW agent commands
+
+```text
+/khaw status
+/wish help
+/wish new <slug> --name "<title>"
+/brainstorm "<decision or plan>"
+```
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `reference/cheat-sheet.mdx` (FDE command cheat sheet). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

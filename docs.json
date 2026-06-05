@@ -32,9 +32,10 @@
         "tab": "START HERE",
         "groups": [
           {
-            "group": "Day 0 enrollment",
+            "group": "Day 0 path",
             "pages": [
               "index",
+              "fde-start-here/day-zero-walkthrough",
               "fde-start-here/enrollment",
               "fde-start-here/install-toolchain"
             ]
@@ -52,6 +53,12 @@
               "getting-started/your-first-pack",
               "dev/fde-cli-quickstart"
             ]
+          },
+          {
+            "group": "Platform overview",
+            "pages": [
+              "what-is-khal-os"
+            ]
           }
         ]
       },
@@ -59,7 +66,7 @@
         "tab": "FDE Engineer",
         "groups": [
           {
-            "group": "CLI & auth",
+            "group": "CLI & identity",
             "pages": [
               "dev/fde-cli-quickstart",
               "dev/fde-environment-ladder",
@@ -73,6 +80,12 @@
               "release/publish-your-pack",
               "release/customer-install"
             ]
+          },
+          {
+            "group": "Working with your agent",
+            "pages": [
+              "fde-engineer/agent-companion"
+            ]
           }
         ]
       },
@@ -80,12 +93,34 @@
         "tab": "KHAW",
         "groups": [
           {
-            "group": "KHAW OS",
+            "group": "KHAW harness",
             "pages": [
               "khaw/what-is-khaw",
-              "khaw/khortex",
+              "khaw/agent-quickstart",
+              "khaw/agent-evidence",
+              "khaw/profile-configuration"
+            ]
+          },
+          {
+            "group": "Commands & credentials",
+            "pages": [
+              "khaw/cli-reference",
+              "khaw/slash-commands",
               "khaw/wish",
               "khaw/openrouter-creds"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "KHORTEX",
+        "groups": [
+          {
+            "group": "Reasoning & context",
+            "pages": [
+              "khaw/khortex",
+              "khortex/context-queries",
+              "khortex/council-pattern"
             ]
           }
         ]
@@ -121,8 +156,29 @@
         ]
       },
       {
+        "tab": "Visual Proof",
+        "groups": [
+          {
+            "group": "Screenshots & terminals",
+            "pages": [
+              "visuals/desktop-tour",
+              "visuals/terminal-gallery",
+              "visuals/pack-gallery"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Reference",
         "groups": [
+          {
+            "group": "Quick reference",
+            "pages": [
+              "reference/glossary",
+              "reference/cheat-sheet",
+              "reference/troubleshooting"
+            ]
+          },
           {
             "group": "Manifest",
             "pages": [
@@ -136,9 +192,8 @@
             ]
           },
           {
-            "group": "Original quickstarts",
+            "group": "Legacy quickstarts",
             "pages": [
-              "what-is-khal-os",
               "getting-started/clone-workspace",
               "getting-started/install-dependencies"
             ]
