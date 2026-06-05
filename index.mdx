@@ -1,51 +1,60 @@
 ---
 title: "START HERE — Khal OS FDE manual"
-description: "Day 0 to first proof for a newly hired FDE with only an enrollment code."
+description: "The Day 0 page for a newly hired FDE with only an enrollment code: identity, email, LXC, KHAW, KHAL, SSH, OpenRouter, and first proof."
 ---
 
-This is the first page for a newly hired Forward Deployed Engineer. Assume you have **only an enrollment code** and no company email yet. Your job is not to memorize the platform; your job is to get an account, get a workstation, install the KHAL/KHAW tools, pair with your agent, and produce a small proof safely.
+This is the first page for a newly hired Forward Deployed Engineer. Assume you have **only an enrollment code** and no company email yet. Your job is to turn that code into a safe working loop: identity, email or pending-email proof, workstation/LXC access, KHAW, KHAL CLI, source access, model access, and one small proof that does not touch customers or production.
 
 <Frame caption="The Khal OS desktop shell: packs, terminal, settings, and agent-assisted work in one browser-based operating system.">
-  ![The khal-os desktop shell with a handful of packs running](/images/hero-desktop.png)
+  ![The Khal OS desktop shell with packs and terminal visible](/images/hero-desktop.png)
 </Frame>
 
 <Callout type="warning">
-  Do not skip enrollment and access checks. If you cannot prove who you are, which target you are touching, and whether the command mutates anything, stop and ask your KHAW agent for help.
+  A first-day FDE is allowed to verify and dry-run. They are not allowed to mutate customer, HML, production, provider credentials, SSH routes, or Gitea membership unless an onboarding owner or operator gives an explicit GO.
 </Callout>
 
-## Day 0 path
+## The one-page Day 0 route
 
 <CardGroup cols={2}>
-  <Card title="1. Redeem your enrollment code" icon="ticket" href="/fde-start-here/enrollment">
-    Turn the code into identity, email, KHAW profile, and the first support channel.
+  <Card title="0. Walk the whole Day 0 path" icon="route" href="/fde-start-here/day-zero-walkthrough">
+    Enrollment code → email/local identity → LXC → KHAW → KHAL → SSH → model access → first proof, all on one page.
+  </Card>
+  <Card title="1. Redeem identity safely" icon="ticket" href="/fde-start-here/enrollment">
+    Use `khaw fde provision --email-local ... --dry-run --json` when email does not exist yet.
   </Card>
   <Card title="2. Install the toolchain" icon="terminal" href="/fde-start-here/install-toolchain">
-    Install Git, Node, Bun, tea, KHAW, and the KHAL CLI from the current official paths.
+    Install Git, Node/Bun, tea, KHAW, and KHAL CLI from current official paths.
   </Card>
-  <Card title="3. Get SSH and environment access" icon="key" href="/fde-start-here/ssh-access">
-    Set up SSH keys, Gitea access, LXC/dev host aliases, and safe proof commands.
+  <Card title="3. Prove SSH and source access" icon="key" href="/fde-start-here/ssh-access">
+    Verify public-key, Gitea, LXC, and safe remote proof commands without leaking secrets.
   </Card>
-  <Card title="4. Build your first pack" icon="cube" href="/getting-started/your-first-pack">
-    Scaffold, build, typecheck, and dry-run a small pack before mutating any shared target.
+  <Card title="4. Pair with your agent" icon="robot" href="/fde-engineer/agent-companion">
+    Learn what to paste into KHAW and how your agent should fetch context, verify, and report evidence.
+  </Card>
+  <Card title="5. See success outputs" icon="image" href="/visuals/terminal-gallery">
+    Compare your terminal against simulated successful and blocked transcripts.
   </Card>
 </CardGroup>
 
-## What you should know before your first ticket
+## Mental model before your first ticket
 
-- **Khal OS** is where packs run: a browser-based OS shell with apps, settings, terminal, services, and customer environments.
-- **KHAW** is the FDE/agent workstation and governance harness: it installs tools, manages purpose/wish work, and gives your agent the right context.
-- **Khortex/Brain** are context and reasoning surfaces: use them to ask, retrieve, and preserve evidence instead of relying on memory.
-- **KHAL CLI (`khal`)** is the app/deploy companion. Install it from `https://install.khal.ai/app-kit`, not npm.
-- **Private engineering repos** live in KHAL Gitea. Public docs live on GitHub + Mintlify.
+- **Khal OS** is the product/runtime surface where packs, services, settings, terminal views, and customer environments live.
+- **KHAW** is the FDE workstation and agent harness around Hermes: install/doctor/update, Purpose Sessions, slash commands, context, evidence, and safe gates.
+- **Khortex + Brain** are the context/reasoning surfaces. Use them before architecture changes and whenever you do not know the current truth.
+- **KHAL CLI (`khal`)** is the app/deploy/source companion. Use `khal login`, `khal context`, `khal doctor`, `khal install --dry-run`, and `khal deploy --dry-run` before mutation.
+- **Private source** usually lives in KHAL Gitea. Public docs live in GitHub/Mintlify. Do not confuse the two.
 
 ## First proof target
 
-A new FDE's first proof is intentionally small:
+Run this only after enrollment/access/toolchain pages say you are ready:
 
 ```bash
-khal --version
 khaw --version
-khal auth status --target dev --json
+khaw status
+khaw doctor
+khal --version
+khal context --target dev --text
+khal whoami --target dev --json
 khal new app hello-fde
 cd hello-fde
 bun install
@@ -54,15 +63,34 @@ bun run typecheck
 khal install . --target dev --dry-run --json
 ```
 
-If any step fails, keep the output and paste it into your KHAW agent with the prompt below.
-
-<Accordion title="🤖 Agent paste prompt">
+Simulated successful shape:
 
 ```text
-TASK: Use the Khal OS docs page `index.mdx` (START HERE — Khal OS FDE manual) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
-CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
-SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
-EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+$ khaw --version
+KHAW version: 1.0.x
+KHAW build status: ok
+
+$ khal context --target dev --text
+KHAL target: dev
+Auth: signed in as <fde-email>
+Reachability: ok
+Mutation: none
+
+$ khal install . --target dev --dry-run --json
+{
+  "summary": { "status": "pass", "message": "Dry-run preflight passed; no mutations were performed." }
+}
+```
+
+If any step fails, keep the exact sanitized output and give it to your KHAW agent.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `index.mdx` (START HERE — Khal OS FDE manual). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
 ```
 
 </Accordion>

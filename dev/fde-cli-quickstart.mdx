@@ -1,9 +1,9 @@
 ---
-title: 'FDE CLI quickstart'
-description: 'Install the official KHAL CLI, log in with WorkOS/AuthKit, scaffold a pack, validate it locally, and dry-run install before mutating a target.'
+title: "FDE CLI quickstart"
+description: "Install the official KHAL CLI, log in with WorkOS/AuthKit, scaffold a pack, validate it locally, and dry-run install before mutation."
 ---
 
-This is the verified first-run path for a Field Delivery Engineer using the public `khal` CLI.
+This is the verified first-run path for a Forward Deployed Engineer using the public `khal` CLI.
 
 <Warning>
   Install the CLI through the official KHAL-owned installer. Do **not** install or document the FDE CLI through npm, GitHub Packages, or raw package registries.
@@ -12,13 +12,13 @@ This is the verified first-run path for a Field Delivery Engineer using the publ
 ## 0. Prerequisites
 
 ```bash
-node --version    # Node.js 20+; Node.js 22 is common in CI
+node --version
 npm --version
-bun --version     # generated repos use Bun
-khaw --version    # KHAW agent/workstation harness
+bun --version
+khaw --version
 ```
 
-Private KHAL app repos live in KHAL Gitea. Use the repo URL and credentials from the internal Gitea UI or onboarding note when you install from a private source. GitHub authentication is only relevant for public docs and public exceptions.
+Private KHAL app repos live in KHAL Gitea. Use the repo URL and credentials from the internal Gitea UI or onboarding note when you install from a private source.
 
 ## 1. Install `khal`
 
@@ -29,34 +29,37 @@ khal --version
 khal --help
 ```
 
-Expected command families include:
+Current top-level command families include:
 
 ```text
 new, start, build, deploy, install, list, logs, link, pull,
-login, git, whoami, logout, config, target, context, doctor, update
+login, git, promote, auth, whoami, logout, config, target,
+context, doctor, dev, infra, telemetry, update
 ```
 
 ## 2. Log in to a target
 
-On a workstation with a browser:
+Desktop/browser workstation:
 
 ```bash
-khal auth login --target dev
+khal login --target dev
 ```
 
-On SSH/headless/agent sessions, print the URL instead of trying to open a browser:
+SSH/headless/agent session:
 
 ```bash
-khal auth login --target dev --no-browser
+khal login --target dev --no-browser
 ```
 
-Verify identity and recovery state without printing secrets:
+Verify identity and target without printing secrets:
 
 ```bash
-khal auth status --target dev --json
 khal whoami --target dev --json
 khal context --target dev --text
+khal git status --target dev
 ```
+
+`khal auth login` and `khal auth status` are valid aliases, but the top-level `khal login` / `khal whoami` path is easiest for new FDEs.
 
 ## 3. Scaffold a new app, service, or workflow
 
@@ -82,17 +85,15 @@ bun run build
 bun run typecheck
 ```
 
-A clean scaffold should pass all three before you touch a shared target.
+A clean scaffold should pass before you touch a shared target.
 
 ## 5. Dry-run install before mutation
-
-From the generated repo root:
 
 ```bash
 khal install . --target dev --dry-run --json
 ```
 
-A clean scaffold reports a passing summary and zero blocking checks:
+Clean shape:
 
 ```json
 {
@@ -103,24 +104,23 @@ A clean scaffold reports a passing summary and zero blocking checks:
 }
 ```
 
-For a hosted app repo, always pass an explicit branch:
+For hosted private source:
 
 ```bash
 khal install <private-khal-gitea-repo-url> --branch dev --target dev --scope shared --dry-run --json
 ```
 
-## 6. Install only after dry-run passes
+## 6. Mutate only after dry-run passes
 
 ```bash
 khal install . --target dev --scope shared
 ```
 
-If the target denies the mutation, ask for the permission named by the CLI. The current install path usually requires marketplace/install permission for the target organization.
+If the target denies mutation, ask for the permission named by the CLI. Do not bypass through raw Kubernetes, Helm, or manual secrets.
 
-## 7. Useful proof commands
+## Useful proof commands
 
 ```bash
-khal target list --json
 khal context --target dev --text
 khal doctor --target dev
 khal logs <app-id> --target dev --tail 50
@@ -128,37 +128,13 @@ khal status <app-id> --target dev --json
 khal open <app-id> --target dev --check --json
 ```
 
-`status` and `open` may be hidden compatibility helpers in some releases. They are useful for proof, but the authoritative public ladder is `khal --help` plus the installed command output.
-
-## Troubleshooting
-
-### `khal --version` is stale
-
-```bash
-which khal
-khal update --channel latest
-curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
-sh khal-app-kit-installer.sh
-khal --version
-```
-
-### Private Gitea repo fetch fails
-
-```bash
-tea login list
-tea whoami
-git ls-remote <private-khal-gitea-repo-url>
-```
-
-For SSH remotes, register your SSH key in Gitea first and use the SSH clone URL. Do not print or commit tokens, credential-helper output, or private remote URLs in public docs/issues.
-
-<Accordion title="🤖 Agent paste prompt">
+<Accordion title="🤖 Paste this to your KHAW agent">
 
 ```text
-TASK: Use the Khal OS docs page `dev/fde-cli-quickstart.mdx` (FDE CLI quickstart) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
-CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
-SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
-EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+TASK: I am reading `dev/fde-cli-quickstart.mdx` (FDE CLI quickstart). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
 ```
 
 </Accordion>

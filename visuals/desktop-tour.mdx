@@ -1,0 +1,36 @@
+---
+title: "Desktop tour"
+description: "Visual guide to the Khal OS shell and the surfaces a new FDE should recognize."
+---
+
+Use this page to build a visual mental model before debugging commands.
+
+<Frame caption="Khal OS desktop shell with running packs and system chrome.">
+  ![Khal OS desktop shell](/images/hero-desktop.png)
+</Frame>
+
+## What to notice
+
+- **Shell/chrome** — the browser-based OS surface, not a raw website.
+- **Packs/apps** — installable KHAL units with `khal-app.json` and runtime proof.
+- **Terminal pack** — where local commands and dry-runs are visible.
+- **Settings/source panels** — where identity, auth, and app metadata become visible.
+
+<Frame caption="Dark shell reference. Use screenshots like this to compare whether you are on the intended surface.">
+  ![Khal OS dark shell](/images/hero-dark.png)
+</Frame>
+
+## Visual proof rule
+
+A screenshot proves only what is visible. Pair it with command/API proof when claiming an install, auth, release, or target state.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `visuals/desktop-tour.mdx` (Desktop tour). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

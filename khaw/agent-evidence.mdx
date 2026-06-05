@@ -1,0 +1,54 @@
+---
+title: "Agent evidence and proof"
+description: "What good KHAW/FDE proof looks like: commands, outputs, URLs, screenshots, and blockers."
+---
+
+A KHAW agent report is useful only if another agent or human can reproduce it.
+
+## Minimum proof packet
+
+```text
+Command: <exact command or URL>
+Exit status: <0/non-zero or HTTP status>
+Output: <sanitized relevant output>
+Proves: <one sentence>
+Does not prove: <important limitation>
+Next safe action: <command/request>
+Mutation: none | local-only | approved shared target
+```
+
+## Good proof
+
+```text
+Command: khal install . --target dev --dry-run --json
+Exit status: 0
+Output: summary.status=pass; mutation=none
+Proves: app manifest/source can pass dev install preflight.
+Does not prove: the app is installed or healthy in dev.
+Next safe action: ask for GO to run non-dry-run install or keep local.
+```
+
+## Bad proof
+
+```text
+It should work now.
+```
+
+## Evidence destinations
+
+- Short task: paste back to the chat.
+- Multi-step work: `/wish new <slug>` and keep artifacts under Brain.
+- Architecture decision: `/brainstorm` and preserve council output.
+- UI proof: screenshot or browser output plus console cleanliness.
+- Release proof: PR/commit, CI, deploy ledger, version/image/source evidence.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khaw/agent-evidence.mdx` (Agent evidence and proof). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

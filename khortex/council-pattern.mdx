@@ -1,0 +1,46 @@
+---
+title: "Khortex council pattern"
+description: "Use three-lens review before architecture, release, or safety-sensitive FDE decisions."
+---
+
+Use a council when a decision has meaningful architecture, safety, customer, cost, or release consequences.
+
+## Three lenses
+
+```text
+Architect: propose feasible designs and constraints.
+Critic: find risks, missing evidence, security/cost/failure modes.
+Synthesizer: choose one path, define gates, commands, rollback, and proof.
+```
+
+## KHAW entry point
+
+```text
+/brainstorm "Should we <decision>? Include Architect, Critic, Synthesizer, gates, and proof."
+```
+
+## Good council output
+
+```text
+Decision: proceed with dev dry-run only.
+Gate 1: `khal context --target dev --text` proves identity/target.
+Gate 2: `khal install ... --dry-run --json` proves manifest/source preflight.
+Abort if: target is HML/prod, secrets missing, source ref unknown, or logs contradict CLI.
+```
+
+## Where to save it
+
+- Short decision: paste in the task thread.
+- Durable mission: Brain/Purpose Session artifact under `/wish`.
+- Public docs: scrub private names, URLs, secrets, and customer data.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khortex/council-pattern.mdx` (Khortex council pattern). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

@@ -1,18 +1,28 @@
 ---
 title: "Install your FDE toolchain"
-description: "Install Git, Node, Bun, tea, KHAW, and the KHAL CLI with current canonical commands."
+description: "Install Git, Node, Bun, tea, KHAW, and the KHAL CLI with current canonical commands and expected output."
 ---
 
-Install the tools in this order. The KHAL and KHAW commands are the product surface; npm packages and private repo checkouts are development internals unless a runbook explicitly says otherwise.
+Install tools in this order. The KHAL and KHAW commands are the product surface; private repo checkouts are source access details from onboarding.
 
 ## 1. Base tools
 
 ```bash
 git --version
-node --version    # Node 20+; Node 22 is common in CI
+node --version
 npm --version
 bun --version
 python3 --version
+```
+
+Simulated output:
+
+```text
+git version 2.x.x
+v22.x.x
+10.x.x
+1.x.x
+Python 3.11.x
 ```
 
 If Bun is missing:
@@ -23,21 +33,19 @@ curl -fsSL https://bun.sh/install | bash
 
 ## 2. Gitea CLI (`tea`)
 
-Private KHAL engineering uses Gitea. Install `tea` using your OS package path or the internal onboarding note, then verify:
-
 ```bash
 tea login list
 tea whoami
 ```
 
-If `tea whoami` fails, you probably need email/Gitea access finished first.
+If `tea whoami` fails, email/Gitea access probably is not finished. Do not invent credentials; ask your onboarding owner.
 
 ## 3. KHAW CLI
 
-KHAW is the agent/workstation harness. The current install script clones the private KHAW repo on the `dev` branch and symlinks `bin/khaw` into `~/.local/bin`.
+Use the private KHAW repo URL from your onboarding note:
 
 ```bash
-git clone --branch dev https://git.namastex.io/khal-apps/khaw.git ~/.khaw-src
+git clone --branch dev <private-khaw-gitea-repo-url> ~/.khaw-src
 mkdir -p ~/.local/bin
 ln -sf ~/.khaw-src/bin/khaw ~/.local/bin/khaw
 export PATH="$HOME/.local/bin:$PATH"
@@ -46,15 +54,18 @@ khaw status
 khaw doctor
 ```
 
-If your shell cannot find `khaw`, add this to your shell profile:
+Successful shape:
 
-```bash
-export PATH="$HOME/.local/bin:$PATH"
+```text
+KHAW version: 1.0.x
+KHAW target: <commit-or-branch>
+KHAW working tree: clean
+Doctor: OK for native harness
 ```
 
 ## 4. KHAL CLI (`khal`)
 
-AppKit distribution is KHAL-owned. Do **not** install or document the FDE CLI through npm. Use the official installer:
+AppKit distribution is KHAL-owned. Do **not** install the FDE CLI through npm.
 
 ```bash
 curl -fsSL https://install.khal.ai/app-kit -o khal-app-kit-installer.sh
@@ -63,14 +74,13 @@ khal --version
 khal --help
 ```
 
-Known top-level verbs include:
+Current command families include:
 
 ```text
 new, start, build, deploy, install, list, logs, link, pull,
-login, git, whoami, logout, config, target, context, doctor, update
+login, git, promote, auth, whoami, logout, config, target,
+context, doctor, dev, infra, telemetry, update
 ```
-
-`build` and `list` may still be compatibility/stub surfaces depending on the release channel; `doctor`, `login`, `install`, `logs`, `link`, and `pull` are real FDE surfaces.
 
 ## 5. First health snapshot
 
@@ -78,19 +88,19 @@ login, git, whoami, logout, config, target, context, doctor, update
 khaw --version
 khaw doctor
 khal --version
-khal doctor --target dev
 khal context --target dev --text
+khal doctor --target dev
 ```
 
-Keep this output. It is the baseline your agent uses to tell whether you are blocked by local setup, identity, source control, or target access.
+Keep the output. It tells your agent whether you are blocked by local setup, identity, source control, target reachability, or permissions.
 
-<Accordion title="🤖 Agent paste prompt">
+<Accordion title="🤖 Paste this to your KHAW agent">
 
 ```text
-TASK: Use the Khal OS docs page `fde-start-here/install-toolchain.mdx` (Install your FDE toolchain) to guide an FDE through the workflow, run only safe verification commands first, and return evidence with blockers.
-CONTEXT: You are helping a KHAL Forward Deployed Engineer. Read this page, prefer current command output over memory, and keep secrets/private URLs out of public artifacts.
-SAFE FIRST COMMANDS: Check tool versions, auth status, target identity, git branch/ref, and dry-run output before any mutation.
-EVIDENCE: Return command, exit status, sanitized output, and the next safe action. If credentials, SSH, Gitea, KHAW, or target access are missing, produce the exact access request instead of guessing.
+TASK: I am reading `fde-start-here/install-toolchain.mdx` (Install your FDE toolchain). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
 ```
 
 </Accordion>

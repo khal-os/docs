@@ -1,0 +1,107 @@
+---
+title: "KHAW CLI reference for FDEs"
+description: "Current KHAW command families a new FDE and their agent should know before using undocumented surfaces."
+---
+
+KHAW is bigger than `/wish` and `/brainstorm`. This page documents the current CLI families that matter for Day 0 onboarding, app-cell work, context, evidence, and safe sharing.
+
+<Callout type="info">
+  Always prefer `khaw <command> --help` on your machine when a flag matters. This page is a human map; live CLI help is the final local truth.
+</Callout>
+
+## Core health
+
+```bash
+khaw --version
+khaw status
+khaw doctor
+khaw dogfood
+```
+
+Use these to prove the harness is installed and can inspect itself.
+
+## Identity and onboarding
+
+```bash
+khaw auth login --token-stdin
+khaw auth status
+khaw onboarding plan --email <you@company> --dry-run --json
+khaw onboarding verify --identity <identity> --ct <ct-id> --ip <ip> --dry-run
+khaw onboarding first-command --identity <identity> --dry-run
+```
+
+`onboarding plan` currently expects an email. If the FDE does not have email yet, use the FDE provisioning receipt path below.
+
+## FDE provisioning and verification
+
+```bash
+khaw fde provision --full-name "<Name>" --email-local <identity> --domain namastex.ai --role fde --dry-run --json --out ./fde-provision.receipt.json
+khaw fde verify --from ./fde-provision.receipt.json --dry-run --json
+khaw fde spend --identity <identity> --json
+khaw fde usage record --help
+```
+
+This is the current replacement for any old or imagined `khaw fde enroll` command.
+
+## SSH and machine access
+
+```bash
+khaw ssh <identity> --hostname <fde-lxc-alias> --dry-run
+```
+
+The dry-run should show the intended route and final SSH command without connecting.
+
+## Context organs
+
+```bash
+khaw context doctor
+khaw context init --help
+khaw context smoke
+```
+
+Use these before asking the agent to rely on Brain/OpenViking/Hermes context.
+
+## Desktop
+
+```bash
+khaw desktop status --json
+khaw desktop setup --help
+khaw desktop doctor --json
+khaw desktop open --help
+```
+
+Desktop commands configure and verify the native KHAW/Hermes desktop connection profile. They are not required for every first-day FDE proof, but they are part of the current surface.
+
+## Apps and app lifecycle
+
+```bash
+khaw apps list --json
+khaw apps show <app-id> --json
+khaw apps register --help
+khaw apps-install --mode local --apps brain,khortex --dry-run
+khaw app-deploy <git-url-or-app-id> --dry-run
+khaw app-share <app-id> --list --json
+```
+
+Use these for KHAW Verse/app-cell inventory, local PM2 app installs, git/app deployment plans, and sharing metadata. A dry-run or manifest record is not runtime proof; verify health, URL, and logs before saying an app is installed.
+
+## Updates and overlays
+
+```bash
+khaw update --help
+khaw update-hermes --help
+khaw apply --help
+```
+
+KHAW-owned behavior should live in plugins, overlays, manifests, or patches, not unmanaged edits to upstream Hermes.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khaw/cli-reference.mdx` (KHAW CLI reference for FDEs). Use this page as the map, then run current `khaw --help` and subcommand `--help` before guiding me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, app sharing, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: `khaw --version`, `khaw doctor`, `khaw auth status`, `khaw context doctor`, and the relevant subcommand `--help`.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, what it does not prove, and the next safe action.
+```
+
+</Accordion>

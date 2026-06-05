@@ -1,0 +1,70 @@
+---
+title: "Troubleshooting"
+description: "Common first-week FDE blockers and the safest next command or request."
+---
+
+## `khaw fde enroll` does not exist
+
+Use current provision/verify commands:
+
+```bash
+khaw fde provision --email-local <identity> --domain namastex.ai --dry-run --json
+khaw fde verify --from ./fde-provision.receipt.json --dry-run --json
+```
+
+## `khal target list` does not exist
+
+Use context/identity checks:
+
+```bash
+khal context --target dev --text
+khal whoami --target dev --json
+khal doctor --target dev
+```
+
+## KHAL auth fails
+
+```bash
+khal login --target dev --no-browser
+khal whoami --target dev --json
+```
+
+If the URL or token flow fails, paste the sanitized output to your KHAW agent and ask for an access request.
+
+## Gitea clone fails
+
+```bash
+tea whoami
+git ls-remote <private-khal-gitea-repo-url>
+khal git status --target dev
+```
+
+Ask for Gitea account/group membership if these fail.
+
+## LXC SSH fails
+
+```bash
+khaw ssh <identity> --hostname <fde-lxc-alias> --dry-run
+ssh -vv <fde-lxc-alias> 'hostname'
+```
+
+Redact private IPs and key paths before posting public evidence.
+
+## Model calls fail
+
+```bash
+khaw fde spend --identity <identity> --json
+```
+
+If no provider route exists, request an approved OpenRouter/model credential route and budget policy.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `reference/troubleshooting.mdx` (Troubleshooting). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

@@ -1,0 +1,69 @@
+---
+title: "KHAW slash commands"
+description: "The current official KHAW Hermes slash-command surface: /khaw, /wish, and /brainstorm."
+---
+
+KHAW slash commands are the human/agent entry points inside a KHAW-enabled Hermes session. Document only commands verified in the KHAW plugin: `/khaw`, `/wish`, and `/brainstorm`.
+
+## `/khaw`
+
+```text
+/khaw status
+/khaw help
+```
+
+Expected behavior:
+
+```text
+KHAW additive harness
+repo: <khaw repo path>
+manifest: present
+base profile: present
+mutation: none
+```
+
+Use it when you need to prove the local KHAW plugin is loaded and can read harness status.
+
+## `/wish`
+
+```text
+/wish help
+/wish list
+/wish status <slug>
+/wish new <slug> --name "<human title>"
+```
+
+Use it to create or inspect local Purpose Session/Wish artifacts under Brain. It should not mutate customer/prod resources.
+
+## `/brainstorm`
+
+```text
+/brainstorm "Should we deploy this app-pack to dev?"
+/brainstorm --run "Review this architecture decision"
+```
+
+The safe documented slice prints or runs a three-lens council prompt. It should preserve the brainstorm as a local Brain/KHAW artifact and state model-spend behavior explicitly.
+
+## Tool surfaces behind commands
+
+KHAW also provides read-only tools such as:
+
+```text
+khaw_status
+khaw_purpose_status
+khaw_work_registry
+khaw_brain_ask
+```
+
+Agents should prefer these for evidence over stale chat memory.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khaw/slash-commands.mdx` (KHAW slash commands). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action. If a slash command is missing, run `/khaw help` and report plugin/version truth instead of inventing a command.
+```
+
+</Accordion>

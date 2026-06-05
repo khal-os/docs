@@ -1,0 +1,44 @@
+---
+title: "KHAW agent quickstart"
+description: "How a new FDE should work with their KHAW/Hermes agent from the first session."
+---
+
+Your KHAW agent is not a chatbot bolted onto docs. It is the companion that fetches context, verifies commands, records evidence, and keeps you from touching the wrong target.
+
+## First paste
+
+```text
+I am a new KHAL FDE. Start from the docs START HERE path. First verify my local toolchain and identity without mutation. Then tell me the next safe command. Redact secrets and private URLs. If I lack email, Gitea, LXC, KHAW, KHAL, SSH, or model credentials, write the exact access request for my onboarding owner.
+```
+
+## Agent operating loop
+
+1. **Fetch context** — docs page, repo files, Brain/Khortex source handles.
+2. **Verify current CLI** — `--help`, versions, target, identity, dry-run.
+3. **Act safely** — read-only or local mutation first; shared/dev only after dry-run.
+4. **Report evidence** — command, exit status, sanitized output, next action.
+5. **Preserve important work** — use `/wish` for multi-step missions and `/brainstorm` for council decisions.
+
+## Commands to teach your agent
+
+```text
+/khaw status
+/wish help
+/wish new first-fde-proof --name "First FDE proof"
+/brainstorm "What is the safest first proof after enrollment?"
+```
+
+## Trust rule
+
+Trust the agent only when it shows current evidence. If it says "fixed" or "ready" without command output, URL proof, PR, or rendered/browser proof, ask it to verify.
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `khaw/agent-quickstart.mdx` (KHAW agent quickstart). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>

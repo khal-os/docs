@@ -1,0 +1,73 @@
+---
+title: "Terminal output gallery"
+description: "Simulated successful and blocked command transcripts for junior FDEs and their agents."
+---
+
+This page shows what success and safe blockers look like. Output is representative; your exact version numbers may differ.
+
+## Toolchain ready
+
+```text
+$ khaw --version
+KHAW version: 1.0.x
+KHAW build status: ok
+
+$ khal --version
+1.0.x
+```
+
+## KHAL target ready
+
+```text
+$ khal context --target dev --text
+KHAL target: dev
+Auth: signed in as <fde-email>
+Reachability: ok
+Mutation: none
+```
+
+## KHAL target blocked
+
+```text
+$ khal context --target dev --text
+KHAL target: dev
+Auth: not signed in
+Next: run `khal login --target dev --no-browser`
+Mutation: none
+```
+
+## Dry-run pass
+
+```json
+{
+  "summary": {
+    "status": "pass",
+    "message": "Dry-run preflight passed; no mutations were performed."
+  }
+}
+```
+
+## Dry-run blocked
+
+```json
+{
+  "summary": { "status": "blocked" },
+  "blockers": ["missing App Settings: API_BASE_URL"],
+  "mutation": "none"
+}
+```
+
+<Frame caption="Example local build success screenshot.">
+  ![Bun build success](/images/getting-started/bun-build-success.png)
+</Frame>
+
+<Accordion title="🤖 Paste this to your KHAW agent">
+
+```text
+TASK: I am reading `visuals/terminal-gallery.mdx` (Terminal output gallery). Use this page as the contract, then verify current CLI/output before you guide me.
+CONTEXT: I may be a new KHAL FDE. Prefer read-only checks and dry-runs first. Do not mutate customer, HML, production, credentials, SSH, Gitea, or model-provider state without an explicit GO.
+SAFE FIRST COMMANDS: Check versions, identity, target, git source/ref, KHAW doctor/status, KHAL context, and dry-run output. Redact secrets and private URLs.
+EVIDENCE: Return command, exit status, sanitized output, what it proves, and the next safe action.
+```
+
+</Accordion>
