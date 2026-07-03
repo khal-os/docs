@@ -1,67 +1,55 @@
 ---
 title: "What access means for an FDE"
-description: "Access is a real cloud workstation, not a login — the shape of the flow before you run your first command."
+description: "Access is a real cloud workstation, not a login."
 ---
 
-When someone says an FDE has "access," they don't mean a dashboard account. They mean you can `ssh` into your own real, full-sudo Ubuntu workstation, running on KHAL's own infrastructure. Everything on this page is the path that gets you there.
+FDE "access" isn't a dashboard account — it's `ssh` into your own full-sudo Ubuntu workstation on KHAL infrastructure. This page is the map; the two role guides are the runbooks.
 
 <Note>
-  Every command on these pages is the `khal fde` CLI (part of `app-kit`), talking to the platform API at `platform.khal.ai`. That host never changes. `--target` is an **environment label** — `dev`, `hml`, or `prod` — never a URL or hostname.
+  Every command is the `khal fde` CLI (from `app-kit`), always talking to `platform.khal.ai`. `--target` is an **environment label** (`dev`, `hml`, `prod`), never a URL.
 </Note>
 
-## Two people, one flow
+## Two roles, one flow
 
-Getting access takes two roles working together:
+- **Admin/superadmin** — mints your invite, later approves your SSH lease.
+- **You (engineer)** — redeem the invite, request the workstation, connect.
 
-- **An admin (or superadmin)** mints your invite and, later, approves your workstation's SSH lease.
-- **You, the engineer** redeem the invite, request the workstation, and connect.
+No shortcuts: no workstation without an invite, no SSH without an approval.
 
-Nobody skips a step. You can't request a workstation without an invite, and you can't SSH in without an approval — even after the workstation itself exists.
-
-## The flow, at a glance
+## The flow
 
 <Steps>
-  <Step title="Admin mints an invite">
-    A superadmin creates your single-use invite code — the credential that bootstraps your identity. Nothing to install yet; this happens before anyone touches a CLI on your side.
-  </Step>
-  <Step title="You enroll">
-    You redeem the invite and hand over your SSH public key with `khal fde enroll`.
-  </Step>
-  <Step title="You request a workstation">
-    `khal fde instance` provisions a real VM — cloned, booted, and wired into Tailscale automatically.
-  </Step>
-  <Step title="Admin approves SSH access">
-    Your workstation exists, but its SSH lease stays gated until a lead or admin approves it.
-  </Step>
-  <Step title="You connect">
-    `khal fde ssh` drops you onto your own workstation. `khal fde status` tells you exactly where you are in this list at any point.
-  </Step>
+  <Step title="Admin mints an invite">A single-use code that bootstraps your identity.</Step>
+  <Step title="You enroll">Redeem it and hand over your SSH public key — `khal fde enroll`.</Step>
+  <Step title="You request a workstation">`khal fde instance` provisions a real VM — cloned, booted, on Tailscale.</Step>
+  <Step title="Admin approves">The workstation exists, but the SSH lease stays gated until approved.</Step>
+  <Step title="You connect">`khal fde ssh`. Check `khal fde status` anytime.</Step>
 </Steps>
 
 ## Before you start
 
-You'll need the `khal` CLI installed. If you haven't done that yet, see [Install your FDE toolchain](/fde-start-here/install-toolchain) first — every command on the next two pages assumes `khal` is already on your `PATH`.
+Install the `khal` CLI — see [Install your FDE toolchain](/fde-start-here/install-toolchain).
 
 ## Pick your role
 
 <CardGroup cols={2}>
   <Card title="I'm the admin" icon="user-shield" href="/fde-start-here/access/admin-guide">
-    Mint a new FDE's invite, then approve their workstation once they've requested one.
+    Mint an invite, then approve the workstation.
   </Card>
   <Card title="I'm the new engineer" icon="terminal" href="/fde-start-here/access/engineer-guide">
-    Redeem your invite, request your workstation, and connect.
+    Redeem, request, connect.
   </Card>
 </CardGroup>
 
-Stuck partway through? [Access troubleshooting](/fde-start-here/access/troubleshooting) covers the most common blockers — single-use codes, approval waits, and which `--target` to use.
+Stuck? [Access troubleshooting](/fde-start-here/access/troubleshooting).
 
 <Accordion title="🤖 Agent paste prompt">
 
 ```text
-TASK: Use the Khal OS docs page `fde-start-here/access/overview.mdx` (What access means for an FDE) to orient a new FDE or admin on the access flow, then hand off to the role-specific page before running anything.
-CONTEXT: This page is an orientation page, not a runbook — the actual commands live in the admin and engineer guides it links to. Read this page, then read whichever of those two pages matches who you're helping.
-SAFE FIRST COMMANDS: `khal fde status`, `khal --version`. Neither mutates.
-EVIDENCE: Confirm which role (admin or engineer) you're helping before recommending any command, then follow that page's own agent prompt.
+TASK: Use `fde-start-here/access/overview.mdx` to orient a new FDE or admin, then hand off to the role-specific guide before running anything.
+CONTEXT: Orientation page, not a runbook — commands live in the admin and engineer guides it links to.
+SAFE FIRST COMMANDS: `khal fde status`, `khal --version` (neither mutates).
+EVIDENCE: Confirm the role (admin or engineer) before recommending a command, then follow that page's own agent prompt.
 ```
 
 </Accordion>
