@@ -1,71 +1,55 @@
 ---
 title: "O que significa acesso para um FDE"
-description: "Acesso é uma workstation real na nuvem, não um login — o formato do fluxo antes de você rodar o primeiro comando."
+description: "Acesso é uma workstation real na nuvem, não um login."
 ---
 
-Quando alguém diz que um FDE "tem acesso", não está falando de uma conta em um painel. Está dizendo que você consegue dar `ssh` na sua própria workstation Ubuntu real, com sudo completo, rodando na infraestrutura da própria KHAL. Tudo nesta página é o caminho até chegar lá.
+"Acesso" para um FDE não é uma conta em painel — é dar `ssh` na sua própria workstation Ubuntu com sudo completo, na infraestrutura da KHAL. Esta página é o mapa; os dois guias por papel são os runbooks.
 
 <Note>
-  Todo comando destas páginas é a CLI `khal fde` (parte do `app-kit`), conversando com a API da plataforma em `platform.khal.ai`. Esse host nunca muda. `--target` é um **rótulo de ambiente** — `dev`, `hml` ou `prod` — nunca uma URL ou hostname.
+  Todo comando é a CLI `khal fde` (do `app-kit`), sempre conversando com `platform.khal.ai`. `--target` é um **rótulo de ambiente** (`dev`, `hml`, `prod`), nunca uma URL.
 </Note>
 
-## Duas pessoas, um fluxo só
+## Dois papéis, um fluxo
 
-Conseguir acesso depende de dois papéis trabalhando juntos:
+- **Admin/superadmin** — gera seu convite e, depois, aprova o lease de SSH.
+- **Você (engenheiro(a))** — resgata o convite, solicita a workstation, conecta.
 
-- **Um admin (ou superadmin)** gera o seu convite e, depois, aprova o lease de SSH da sua workstation.
-- **Você, o(a) engenheiro(a)** resgata o convite, solicita a workstation e conecta.
+Sem atalhos: sem convite não há workstation, sem aprovação não há SSH.
 
-Ninguém pula etapa. Você não consegue pedir uma workstation sem convite, e não consegue entrar por SSH sem aprovação — mesmo depois que a workstation já existe.
-
-## O fluxo, em resumo
+## O fluxo
 
 <Steps>
-  <Step title="Admin gera um convite">
-    Um superadmin cria seu código de convite de uso único — a credencial que dá o pontapé inicial na sua identidade. Ainda não há nada para instalar; isso acontece antes de você tocar em qualquer CLI.
-  </Step>
-  <Step title="Você se cadastra (enroll)">
-    Você resgata o convite e entrega sua chave pública SSH com `khal fde enroll`.
-  </Step>
-  <Step title="Você solicita uma workstation">
-    `khal fde instance` provisiona uma VM real — clonada, iniciada e já conectada à Tailscale automaticamente.
-  </Step>
-  <Step title="Admin aprova o acesso SSH">
-    Sua workstation já existe, mas o lease de SSH continua bloqueado até um lead ou admin aprovar.
-  </Step>
-  <Step title="Você conecta">
-    `khal fde ssh` te coloca dentro da sua própria workstation. `khal fde status` mostra exatamente em que ponto desta lista você está, a qualquer momento.
-  </Step>
+  <Step title="Admin gera um convite">Um código de uso único que inicializa sua identidade.</Step>
+  <Step title="Você se cadastra">Resgata o convite e entrega sua chave pública SSH — `khal fde enroll`.</Step>
+  <Step title="Você solicita uma workstation">`khal fde instance` provisiona uma VM real — clonada, iniciada, na Tailscale.</Step>
+  <Step title="Admin aprova">A workstation existe, mas o lease de SSH fica bloqueado até ser aprovado.</Step>
+  <Step title="Você conecta">`khal fde ssh`. Veja `khal fde status` a qualquer momento.</Step>
 </Steps>
 
 ## Antes de começar
 
-Você vai precisar da CLI `khal` instalada. Se ainda não fez isso, veja primeiro [Install your FDE toolchain](/fde-start-here/install-toolchain) — todo comando das próximas duas páginas assume que o `khal` já está no seu `PATH`.
-
-<Note>
-  Essa página de toolchain ainda existe só em inglês. As quatro páginas de Acesso abaixo têm versão completa em português.
-</Note>
+Instale a CLI `khal` — veja [Instale seu toolchain de FDE](/fde-start-here/install-toolchain).
 
 ## Escolha seu papel
 
 <CardGroup cols={2}>
-  <Card title="Eu sou o admin" icon="user-shield" href="/pt-BR/fde-start-here/access/admin-guide">
-    Gere o convite de um(a) novo(a) FDE e, depois, aprove a workstation quando ele(a) solicitar.
+  <Card title="Sou o admin" icon="user-shield" href="/pt-BR/fde-start-here/access/admin-guide">
+    Gere um convite e aprove a workstation.
   </Card>
-  <Card title="Eu sou o(a) novo(a) engenheiro(a)" icon="terminal" href="/pt-BR/fde-start-here/access/engineer-guide">
-    Resgate seu convite, solicite sua workstation e conecte.
+  <Card title="Sou o(a) novo(a) engenheiro(a)" icon="terminal" href="/pt-BR/fde-start-here/access/engineer-guide">
+    Resgate, solicite, conecte.
   </Card>
 </CardGroup>
 
-Travou no meio do caminho? [Solução de problemas de acesso](/pt-BR/fde-start-here/access/troubleshooting) cobre os bloqueios mais comuns — código de uso único, espera por aprovação e qual `--target` usar.
+Travou? [Troubleshooting de acesso](/pt-BR/fde-start-here/access/troubleshooting).
 
 <Accordion title="🤖 Prompt para colar no seu agente">
 
 ```text
-TAREFA: Use a página de docs do Khal OS `fde-start-here/access/overview.mdx` (O que significa acesso para um FDE) para orientar um(a) novo(a) FDE ou admin sobre o fluxo de acesso, e só depois direcione para a página específica do papel antes de rodar qualquer coisa.
-CONTEXTO: Esta página é de orientação, não um runbook — os comandos de verdade estão nos guias de admin e de engenheiro(a) linkados aqui. Leia esta página, depois leia a página que corresponde a quem você está ajudando.
-COMANDOS SEGUROS PARA COMEÇAR: `khal fde status`, `khal --version`. Nenhum dos dois muta estado.
-EVIDÊNCIA: Confirme qual papel (admin ou engenheiro/a) você está ajudando antes de recomendar qualquer comando, depois siga o prompt de agente da própria página.
+TASK: Use `fde-start-here/access/overview.mdx` para orientar um novo FDE ou admin, depois direcione para o guia do papel específico antes de rodar qualquer coisa.
+CONTEXT: Página de orientação, não um runbook — os comandos estão nos guias de admin e de engenheiro que ela linka.
+SAFE FIRST COMMANDS: `khal fde status`, `khal --version` (nenhum altera estado).
+EVIDENCE: Confirme o papel (admin ou engenheiro) antes de recomendar um comando, depois siga o prompt de agente daquela página.
 ```
 
 </Accordion>
