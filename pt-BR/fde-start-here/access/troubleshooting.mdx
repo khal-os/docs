@@ -1,0 +1,42 @@
+---
+title: "Solução de problemas de acesso"
+description: "Respostas rápidas para os bloqueios mais comuns de Acesso — código de uso único, espera por aprovação e qual --target usar."
+---
+
+Respostas rápidas para o punhado de coisas que travam a maioria dos(as) FDEs novos(as) durante o [Acesso](/pt-BR/fde-start-here/access/overview). Para qualquer outra coisa, veja a página geral de [Troubleshooting](/reference/troubleshooting) (em inglês).
+
+<AccordionGroup>
+  <Accordion title="Meu código de convite diz que já foi usado" icon="ticket">
+    Códigos de convite são de uso único por design — o primeiro `khal fde enroll` bem-sucedido consome o código permanentemente. Se você está vendo essa mensagem e tem certeza que essa é sua primeira tentativa, talvez você já tenha se cadastrado — confira com `khal fde status` antes de supor outra coisa. Se realmente ainda não se cadastrou, peça ao seu admin para gerar um código novo; não tem como "desconsumir" o antigo.
+  </Accordion>
+
+  <Accordion title="O `khal fde ssh` diz que ainda não fui aprovado(a)" icon="lock">
+    Isso é esperado, não um erro. O lease de SSH de toda workstation fica bloqueado pelo Deploy Ledger até um lead ou admin aprovar — a workstation existir e a workstation estar acessível são duas etapas diferentes. Avise quem está te integrando e indique [Gere um convite e aprove o acesso](/pt-BR/fde-start-here/access/admin-guide). Enquanto espera, `khal fde status` e `khal fde ssh --dry-run` funcionam e não mutam nada.
+  </Accordion>
+
+  <Accordion title="Qual --target eu uso?" icon="bullseye">
+    `--target` é um rótulo de ambiente, não uma URL — `dev`, `hml` ou `prod`. Praticamente todo(a) FDE novo(a) deve usar `--target dev` no cadastro. Os alvos `hml`/`prod` pertencem a engajamentos específicos com clientes e vêm do seu lead de integração, não de um palpite. Veja a [escada de ambientes](/fde-start-here/environments) (em inglês) para entender o que cada degrau significa.
+  </Accordion>
+
+  <Accordion title="Gerar um convite falha ou diz acesso negado" icon="ban">
+    `khal fde invite create` é restrito a superadmin, e só aceita endereços `@namastex.ai`. Se você não é superadmin, não consegue gerar um convite — peça para um(a) superadmin gerar por você. Se o e-mail não for `@namastex.ai`, também é um não definitivo; não existe contorno.
+  </Accordion>
+
+  <Accordion title="Não sei em que ponto do processo eu estou" icon="map">
+    ```bash
+    khal fde status
+    ```
+    Rode isso a qualquer momento, do convite até a conexão — mostra seu estado atual e nunca muta nada.
+  </Accordion>
+</AccordionGroup>
+
+<Accordion title="🤖 Prompt para colar no seu agente">
+
+```text
+TAREFA: Use a página de docs do Khal OS `fde-start-here/access/troubleshooting.mdx` (Solução de problemas de acesso) para destravar um(a) FDE ou admin parado(a) no meio do Acesso, verificando com a saída atual dos comandos antes de supor uma correção.
+CONTEXTO: Você está ajudando alguém travado(a) no resgate do convite, na solicitação de instância, ou na aprovação de SSH. Leia esta página e a página específica para a qual ela aponta (admin ou engenheiro/a) antes de recomendar uma correção.
+COMANDOS SEGUROS PARA COMEÇAR: `khal fde status`, `khal fde ssh --dry-run`, `khal --version`. Nenhum deles muta estado.
+EVIDÊNCIA: Retorne comando, status de saída, saída sanitizada (com códigos de convite e hostnames redigidos), o que isso prova, e a próxima ação segura. Nunca sugira rodar de novo um comando que muta (enroll, instance, invite create) especulativamente "para ver o que acontece".
+```
+
+</Accordion>

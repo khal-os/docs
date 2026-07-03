@@ -1,0 +1,132 @@
+---
+title: "Enroll, request a workstation, and connect"
+description: "For new FDEs: redeem your invite code, get a real cloud workstation, and SSH in."
+---
+
+This page is for you if you're a new FDE with an invite code (or about to get one from an admin). By the end, you'll be SSHed into your own real, full-sudo Ubuntu box.
+
+<Note>
+  Minting an invite is an admin job. If you need to *create* one for someone else, see [Mint an invite and approve access](/fde-start-here/access/admin-guide) instead.
+</Note>
+
+## Before you start
+
+You need:
+
+- The `khal` CLI installed — see [Install your FDE toolchain](/fde-start-here/install-toolchain) if you haven't yet.
+- An invite code from an admin. It's single-use and was shown to them once — ask them to send it over a secure channel, not chat history you'll forget to delete.
+
+<Steps>
+  <Step title="Get an SSH key ready">
+    `khal fde enroll` needs your **public** key — it never touches your private key.
+
+    <CodeGroup>
+    ```bash Check for an existing key
+    ls -la ~/.ssh/id_ed25519.pub 2>/dev/null || echo "no key yet"
+    ```
+
+    ```bash Generate a new one
+    ssh-keygen -t ed25519 -C "you@namastex.ai" -f ~/.ssh/id_ed25519 -N ""
+    cat ~/.ssh/id_ed25519.pub
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Redeem your invite code">
+    ```bash
+    khal fde enroll --invite <your-invite-code> --target dev --ssh-key ~/.ssh/id_ed25519.pub
+    ```
+
+    - `--invite` is single-use — it only redeems once. If it fails with something like "already used," ask your admin for a new one; don't retry it "just in case."
+    - `--target` is the environment label for the workstation you're about to request — `dev`, `hml`, or `prod`. Almost every new FDE wants `dev`. It is **not** a hostname or URL.
+    - `--ssh-key` points at the **public** key from the previous step. This is the key that ends up on your workstation.
+
+    A clean enroll moves your state to `platform_enrollment_completed`. Under the hood, `khal fde enroll` calls `POST /v1/fde/enroll` on `platform.khal.ai` — that host never changes, whichever `--target` you pass.
+  </Step>
+
+  <Step title="Request your workstation">
+    <Tabs>
+      <Tab title="Default profile (recommended)">
+        ```bash
+        khal fde instance
+        ```
+        Uses the platform's standard profile, `engineer-standard`.
+      </Tab>
+      <Tab title="Explicit provider">
+        ```bash
+        khal fde instance --provider kubevirt
+        ```
+        Same result, spelled out.
+      </Tab>
+    </Tabs>
+
+    This is the step that makes "access" real. Under the hood, `khal fde instance` calls `POST /v1/fde/instances`, and a background worker clones the `engineer-standard` Ubuntu 24.04 image into a real KubeVirt VM — not a container. Cloud-init sets up your Linux user, installs the public key from enrollment, and joins the box to Tailscale automatically.
+
+    Your state moves `instance_requested` → `runtime_ready`. It can take a few minutes; `khal fde status` tells you where it's at.
+  </Step>
+
+  <Step title="Wait for the SSH lease to be approved">
+    Your workstation exists, but nobody gets SSH into a fresh box for free — the SSH lease is gated by the Deploy Ledger until a lead or admin approves it. This is expected, not a bug. Ping whoever is onboarding you and point them at [Mint an invite and approve access](/fde-start-here/access/admin-guide).
+  </Step>
+
+  <Step title="Connect">
+    <Tabs>
+      <Tab title="See the plan first">
+        ```bash
+        khal fde ssh --dry-run
+        ```
+        Shows exactly what it would run. No connection made.
+      </Tab>
+      <Tab title="Connect for real">
+        ```bash
+        khal fde ssh
+        ```
+        Once approved, this prints a ready-to-run `ssh <user>@<host>` command, where `<host>` is your workstation's Tailscale (tailnet) hostname.
+      </Tab>
+    </Tabs>
+
+    <Warning>
+      Before approval, `khal fde ssh` returns a clear "not approved yet," not an error stack. If you see that, you're not stuck — you're just waiting on the approval step above.
+    </Warning>
+  </Step>
+
+  <Step title="Verify you're in">
+    ```bash
+    whoami
+    hostname
+    sudo -v && echo "sudo ok"
+    ```
+    You should see your own Linux user, your workstation's hostname, and a working `sudo` prompt — a real, full development box, not a shared jump host. That's access.
+  </Step>
+</Steps>
+
+## Check your progress anytime
+
+```bash
+khal fde status
+```
+
+Run it whenever — before, during, or after any step above — to see exactly where you are in the journey.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Install your FDE toolchain" icon="terminal" href="/fde-start-here/install-toolchain">
+    Git, Node, Bun, and the `khal`/`khaw` CLIs, if you haven't set them up yet.
+  </Card>
+  <Card title="Day 0 FDE walkthrough" icon="route" href="/fde-start-here/day-zero-walkthrough">
+    What to do next once you're on your workstation.
+  </Card>
+</CardGroup>
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `fde-start-here/access/engineer-guide.mdx` (Enroll, request a workstation, and connect) to guide a new FDE through getting access, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping a new KHAL Forward Deployed Engineer redeem an invite code, request a workstation, and SSH in. Read this page, prefer current `khal fde` output over memory, and keep invite codes, hostnames, and keys out of public artifacts.
+SAFE FIRST COMMANDS: `khal fde status`, `khal fde ssh --dry-run`, `khal --version`. None of these mutate.
+MUTATING COMMANDS — confirm with the human before running: `khal fde enroll` (consumes a single-use invite) and `khal fde instance` (provisions a real VM). Never run these without an explicit go-ahead.
+EVIDENCE: Return command, exit status, sanitized output (no raw invite codes or private hostnames), what it proves, and the next safe action.
+```
+
+</Accordion>

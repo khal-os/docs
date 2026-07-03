@@ -1,0 +1,60 @@
+---
+title: "Mint an invite and approve access"
+description: "For leads and admins: create a new FDE's invite code, then approve their workstation's SSH lease."
+---
+
+This page is for you if you're onboarding a new FDE — minting their invite and, later, approving their workstation. If you're the new engineer, go to [Enroll, request a workstation, and connect](/fde-start-here/access/engineer-guide) instead.
+
+<Note>
+  You'll need an authenticated `khal` session with superadmin rights before minting. If you're not sure you have that, try the mint command below — a clear permission error is the fastest way to find out.
+</Note>
+
+<Steps>
+  <Step title="Mint a single-use invite code">
+    ```bash
+    khal fde invite create --email <new-fde>@namastex.ai
+    ```
+
+    <Note>
+      Minting is **superadmin-only**, and only for `@namastex.ai` addresses — you can't mint an invite for an external or personal email.
+    </Note>
+
+    The invite is the bootstrap credential — there's no account to create ahead of time. Minting the code *is* what creates the new engineer's identity. Under the hood: `POST /v1/fde/enrollment-codes`.
+
+    <Warning>
+      The code is shown **once**. The platform stores only its SHA-256 hash, so if you lose it, you can't recover it — you'd mint a fresh one instead. Copy it now, before you do anything else.
+    </Warning>
+  </Step>
+
+  <Step title="Hand it off securely">
+    Send the code to the new FDE over a channel you'd trust with a password — not a public channel, a screenshot that gets archived, or a docs page. It's single-use: the engineer's first successful `khal fde enroll` consumes it, and a second attempt fails.
+  </Step>
+
+  <Step title="Approve their SSH lease">
+    Once the engineer enrolls and requests a workstation, its SSH lease sits behind the **Deploy Ledger** until you approve it — nobody gets SSH on a fresh workstation for free. Ask the engineer for their instance ID (they'll see it in their own `khal fde status`), then approve it through your `khal fde` admin tooling.
+
+    Under the hood, approval is: `POST /v1/fde/instances/:id/ssh-lease/approval`. There's no certificate authority in this path — once approved, access is just the engineer's own SSH key plus Tailscale.
+
+    <Tip>
+      Until you approve, the engineer's `khal fde ssh` returns a clear "not approved yet" instead of connecting. That's the expected state, not a broken enrollment — it just means it's your turn.
+    </Tip>
+  </Step>
+</Steps>
+
+## What you're not doing
+
+- You're not choosing a password or generating a certificate — the engineer's own SSH public key, captured at enroll time, is the credential.
+- You're not picking a hostname or IP — Tailscale handles that once the workstation joins the tailnet.
+- You're not provisioning the VM by hand — requesting the instance is the engineer's action (`khal fde instance`). Yours is mint, then approve.
+
+<Accordion title="🤖 Agent paste prompt">
+
+```text
+TASK: Use the Khal OS docs page `fde-start-here/access/admin-guide.mdx` (Mint an invite and approve access) to guide a superadmin/lead through onboarding a new FDE, run only safe verification commands first, and return evidence with blockers.
+CONTEXT: You are helping someone with admin/superadmin rights mint an invite code and later approve a new engineer's SSH lease. Read this page, prefer current `khal fde` output over memory, and keep invite codes and instance/host details out of public artifacts.
+SAFE FIRST COMMANDS: `khal fde status`, `khal --version`. Neither mutates.
+MUTATING COMMANDS — confirm with the human before running: `khal fde invite create` (creates a new identity and a single-use secret) and the SSH-lease approval action. Never run these without an explicit go-ahead, and never print the raw invite code into a shared log or transcript.
+EVIDENCE: Return command, exit status, sanitized output (redact the invite code itself), what it proves, and the next safe action.
+```
+
+</Accordion>
