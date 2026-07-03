@@ -1,0 +1,60 @@
+---
+title: "Gere um convite e aprove o acesso"
+description: "Para leads e admins: crie o código de convite de um(a) novo(a) FDE e, depois, aprove o lease de SSH da workstation dele(a)."
+---
+
+Esta página é para você se está integrando um(a) novo(a) FDE — gerando o convite e, depois, aprovando a workstation. Se você é o(a) novo(a) engenheiro(a), vá direto para [Cadastre-se, peça uma workstation e conecte](/pt-BR/fde-start-here/access/engineer-guide).
+
+<Note>
+  Você vai precisar de uma sessão `khal` autenticada com privilégio de superadmin antes de gerar o convite. Se não tiver certeza se tem esse privilégio, rode o comando de geração abaixo mesmo assim — um erro de permissão claro é o jeito mais rápido de descobrir.
+</Note>
+
+<Steps>
+  <Step title="Gere um código de convite de uso único">
+    ```bash
+    khal fde invite create --email <novo-fde>@namastex.ai
+    ```
+
+    <Note>
+      Gerar convite é **restrito a superadmin**, e só para endereços `@namastex.ai` — não dá para gerar um convite para um e-mail externo ou pessoal.
+    </Note>
+
+    O convite é a credencial de bootstrap — não existe conta para criar antes. Gerar o código *é* o que cria a identidade do(a) novo(a) engenheiro(a). Por baixo do capô: `POST /v1/fde/enrollment-codes`.
+
+    <Warning>
+      O código só aparece **uma vez**. A plataforma guarda apenas o hash SHA-256 dele — se você perder, não tem como recuperar; a saída é gerar um novo. Copie agora, antes de fazer qualquer outra coisa.
+    </Warning>
+  </Step>
+
+  <Step title="Entregue com segurança">
+    Mande o código para o(a) novo(a) FDE por um canal em que você confiaria uma senha — não um canal público, um print que fica arquivado, ou uma página de docs. É de uso único: o primeiro `khal fde enroll` bem-sucedido do(a) engenheiro(a) consome o código, e uma segunda tentativa falha.
+  </Step>
+
+  <Step title="Aprove o lease de SSH">
+    Depois que o(a) engenheiro(a) se cadastra e solicita uma workstation, o lease de SSH dela fica atrás do **Deploy Ledger** até você aprovar — ninguém ganha SSH numa workstation nova de graça. Peça o ID da instância ao(à) engenheiro(a) (ele(a) vê isso no próprio `khal fde status`) e aprove pela sua ferramentação `khal fde` de admin.
+
+    Por baixo do capô, a aprovação é: `POST /v1/fde/instances/:id/ssh-lease/approval`. Não existe autoridade certificadora nesse caminho — depois de aprovado, o acesso é só a chave SSH do(a) próprio(a) engenheiro(a) mais a Tailscale.
+
+    <Tip>
+      Até você aprovar, o `khal fde ssh` do(a) engenheiro(a) retorna um claro "not approved yet" em vez de conectar. Esse é o estado esperado, não um cadastro quebrado — só significa que agora é a sua vez.
+    </Tip>
+  </Step>
+</Steps>
+
+## O que você não está fazendo
+
+- Você não está escolhendo uma senha nem gerando um certificado — a própria chave pública SSH do(a) engenheiro(a), capturada no cadastro, é a credencial.
+- Você não está escolhendo hostname ou IP — a Tailscale cuida disso assim que a workstation entra na tailnet.
+- Você não está provisionando a VM manualmente — solicitar a instância é ação do(a) engenheiro(a) (`khal fde instance`). A sua é gerar o convite e, depois, aprovar.
+
+<Accordion title="🤖 Prompt para colar no seu agente">
+
+```text
+TAREFA: Use a página de docs do Khal OS `fde-start-here/access/admin-guide.mdx` (Gere um convite e aprove o acesso) para guiar um(a) superadmin/lead na integração de um(a) novo(a) FDE, rodando primeiro só comandos seguros de verificação, e retorne evidência com bloqueios.
+CONTEXTO: Você está ajudando alguém com privilégio de admin/superadmin a gerar um código de convite e, depois, aprovar o lease de SSH de um(a) novo(a) engenheiro(a). Leia esta página, prefira a saída atual do `khal fde` à memória, e mantenha códigos de convite e detalhes de instância/host fora de artefatos públicos.
+COMANDOS SEGUROS PARA COMEÇAR: `khal fde status`, `khal --version`. Nenhum dos dois muta estado.
+COMANDOS QUE MUTAM — confirme com o humano antes de rodar: `khal fde invite create` (cria uma nova identidade e um segredo de uso único) e a ação de aprovação do lease de SSH. Nunca rode isso sem um aval explícito, e nunca imprima o código de convite bruto em um log ou transcript compartilhado.
+EVIDÊNCIA: Retorne comando, status de saída, saída sanitizada (com o código de convite redigido), o que isso prova, e a próxima ação segura.
+```
+
+</Accordion>

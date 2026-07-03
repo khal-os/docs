@@ -1,0 +1,132 @@
+---
+title: "Cadastre-se, peça uma workstation e conecte"
+description: "Para novos FDEs: resgate seu código de convite, consiga uma workstation real na nuvem e conecte via SSH."
+---
+
+Esta página é para você se é um(a) novo(a) FDE com um código de convite (ou prestes a ganhar um de um admin). No final, você vai estar conectado(a) via SSH na sua própria workstation Ubuntu real, com sudo completo.
+
+<Note>
+  Gerar um convite é tarefa de admin. Se você precisa *criar* um para outra pessoa, veja [Gere um convite e aprove o acesso](/pt-BR/fde-start-here/access/admin-guide).
+</Note>
+
+## Antes de começar
+
+Você precisa de:
+
+- A CLI `khal` instalada — veja [Install your FDE toolchain](/fde-start-here/install-toolchain) se ainda não instalou.
+- Um código de convite vindo de um admin. Ele é de uso único e foi mostrado ao admin apenas uma vez — peça para te mandarem por um canal seguro, não um histórico de chat que você vai esquecer de apagar.
+
+<Steps>
+  <Step title="Prepare uma chave SSH">
+    O `khal fde enroll` precisa da sua chave **pública** — ele nunca toca na sua chave privada.
+
+    <CodeGroup>
+    ```bash Verificar se já existe uma chave
+    ls -la ~/.ssh/id_ed25519.pub 2>/dev/null || echo "ainda não tenho chave"
+    ```
+
+    ```bash Gerar uma nova
+    ssh-keygen -t ed25519 -C "voce@namastex.ai" -f ~/.ssh/id_ed25519 -N ""
+    cat ~/.ssh/id_ed25519.pub
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Resgate seu código de convite">
+    ```bash
+    khal fde enroll --invite <seu-codigo-de-convite> --target dev --ssh-key ~/.ssh/id_ed25519.pub
+    ```
+
+    - `--invite` é de uso único — só resgata uma vez. Se falhar com algo do tipo "already used", peça um novo ao seu admin; não tente de novo "só para ver".
+    - `--target` é o rótulo de ambiente da workstation que você está prestes a solicitar — `dev`, `hml` ou `prod`. Praticamente todo(a) FDE novo(a) quer `dev`. **Não** é um hostname nem uma URL.
+    - `--ssh-key` aponta para a chave **pública** do passo anterior. É essa chave que vai parar na sua workstation.
+
+    Um enroll limpo move seu estado para `platform_enrollment_completed`. Por baixo do capô, o `khal fde enroll` chama `POST /v1/fde/enroll` em `platform.khal.ai` — esse host nunca muda, qualquer que seja o `--target` que você passar.
+  </Step>
+
+  <Step title="Solicite sua workstation">
+    <Tabs>
+      <Tab title="Perfil padrão (recomendado)">
+        ```bash
+        khal fde instance
+        ```
+        Usa o perfil padrão da plataforma, `engineer-standard`.
+      </Tab>
+      <Tab title="Provider explícito">
+        ```bash
+        khal fde instance --provider kubevirt
+        ```
+        Mesmo resultado, especificado por extenso.
+      </Tab>
+    </Tabs>
+
+    Esta é a etapa que torna o "acesso" real. Por baixo do capô, o `khal fde instance` chama `POST /v1/fde/instances`, e um worker em segundo plano clona a imagem Ubuntu 24.04 `engineer-standard` numa VM KubeVirt de verdade — não um container. O cloud-init configura seu usuário Linux, instala a chave pública do cadastro, e conecta a máquina à Tailscale automaticamente.
+
+    Seu estado muda de `instance_requested` para `runtime_ready`. Pode levar alguns minutos; `khal fde status` mostra em que ponto está.
+  </Step>
+
+  <Step title="Espere a aprovação do lease de SSH">
+    Sua workstation já existe, mas ninguém ganha SSH numa máquina nova de graça — o lease de SSH fica bloqueado pelo Deploy Ledger até um lead ou admin aprovar. Isso é esperado, não um bug. Avise quem está te integrando e indique [Gere um convite e aprove o acesso](/pt-BR/fde-start-here/access/admin-guide).
+  </Step>
+
+  <Step title="Conecte">
+    <Tabs>
+      <Tab title="Ver o plano primeiro">
+        ```bash
+        khal fde ssh --dry-run
+        ```
+        Mostra exatamente o que seria executado. Nenhuma conexão é feita.
+      </Tab>
+      <Tab title="Conectar de verdade">
+        ```bash
+        khal fde ssh
+        ```
+        Depois de aprovado, isso imprime um comando `ssh <user>@<host>` pronto para rodar, onde `<host>` é o hostname da sua workstation na Tailscale (tailnet).
+      </Tab>
+    </Tabs>
+
+    <Warning>
+      Antes da aprovação, `khal fde ssh` retorna um claro "not approved yet", não uma pilha de erro. Se você ver isso, não está travado(a) — só está esperando a etapa de aprovação acima.
+    </Warning>
+  </Step>
+
+  <Step title="Verifique que você está dentro">
+    ```bash
+    whoami
+    hostname
+    sudo -v && echo "sudo ok"
+    ```
+    Você deve ver seu próprio usuário Linux, o hostname da sua workstation, e um `sudo` funcionando — uma máquina de desenvolvimento real e completa, não um jump host compartilhado. Isso é acesso.
+  </Step>
+</Steps>
+
+## Confira seu progresso a qualquer momento
+
+```bash
+khal fde status
+```
+
+Rode isso a qualquer momento — antes, durante ou depois de qualquer etapa acima — para ver exatamente em que ponto da jornada você está.
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Install your FDE toolchain" icon="terminal" href="/fde-start-here/install-toolchain">
+    Git, Node, Bun e as CLIs `khal`/`khaw`, caso ainda não tenha configurado.
+  </Card>
+  <Card title="Day 0 FDE walkthrough" icon="route" href="/fde-start-here/day-zero-walkthrough">
+    O que fazer depois de estar na sua workstation.
+  </Card>
+</CardGroup>
+
+<Accordion title="🤖 Prompt para colar no seu agente">
+
+```text
+TAREFA: Use a página de docs do Khal OS `fde-start-here/access/engineer-guide.mdx` (Cadastre-se, peça uma workstation e conecte) para guiar um(a) novo(a) FDE na obtenção de acesso, rodando primeiro só comandos seguros de verificação, e retorne evidência com bloqueios.
+CONTEXTO: Você está ajudando um(a) novo(a) Forward Deployed Engineer da KHAL a resgatar um código de convite, solicitar uma workstation e conectar via SSH. Leia esta página, prefira a saída atual do `khal fde` à memória, e mantenha códigos de convite, hostnames e chaves fora de artefatos públicos.
+COMANDOS SEGUROS PARA COMEÇAR: `khal fde status`, `khal fde ssh --dry-run`, `khal --version`. Nenhum deles muta estado.
+COMANDOS QUE MUTAM — confirme com o humano antes de rodar: `khal fde enroll` (consome um convite de uso único) e `khal fde instance` (provisiona uma VM real). Nunca rode sem um aval explícito.
+EVIDÊNCIA: Retorne comando, status de saída, saída sanitizada (sem códigos de convite brutos nem hostnames privados), o que isso prova, e a próxima ação segura.
+```
+
+</Accordion>
