@@ -1,0 +1,109 @@
+---
+title: "khal CLI reference for FDEs"
+description: "The whole khal command set, grouped by intent — a human map for FDE engineers and their agents."
+---
+
+`khal` is your one CLI for onboarding, building, shipping, and operating KhalOS packs. This page groups every command by intent so you — or your agent — find the right one fast. Copy the agent block under any family and hand the work to your agent.
+
+<Callout type="info">
+  This page is a human map. `khal <command> --help` on your machine is the final local truth — always check it when a flag matters.
+</Callout>
+
+**New here? One command.** `khal fde join` logs you in, enrolls your machine, and mints your instance — then everything below just works.
+
+<Accordion title="🤖 Copy this → send to your agent — onboard me">
+```text
+TASK: Onboard me to khal from scratch. I'm reading fde-engineer/khal-cli.mdx. Run `khal fde join --help` first, then walk me through it.
+DO: `khal fde join` (login + enroll + instance mint). If it needs an invite/enrollment code, tell me exactly what to paste. After it finishes, confirm with `khal whoami` + `khal context`.
+SAFE: stop and ask me before anything destructive; this is first-time setup, so surface each prompt.
+EVIDENCE: return the command, exit status, sanitized output, my resolved identity + instance, and the next safe action.
+```
+</Accordion>
+
+## Onboarding & identity
+
+One command wires you up: `khal fde join` (login + enroll + instance mint). The rest manage identity, source access, and permissions.
+
+```bash
+khal fde join            # one-command onboarding: login + enroll + instance mint
+khal login               # authenticate with a KHAL host
+khal auth status         # is my session live?
+khal whoami              # the authenticated identity
+khal source login        # wire git + package credentials from your session (alias: khal git)
+khal registry login      # authenticate to the KHAL package registry
+khal permissions grant   # (owner) grant a user access to an environment
+khal logout              # remove a stored credential
+```
+
+<Accordion title="🤖 Copy this → send to your agent">
+```text
+TASK: Get my khal identity wired and verified. I'm reading fde-engineer/khal-cli.mdx. Run `khal --help` and the subcommand `--help` before acting.
+DO: first-time → `khal fde join`; otherwise `khal auth status` + `khal whoami` to confirm I'm wired, and `khal source login` if git/package auth is missing.
+SAFE: status/read-only first. Never change permissions, credentials, or SSH without my explicit GO.
+EVIDENCE: return the command, exit status, sanitized output, what it proves, and the next safe action.
+```
+</Accordion>
+
+## Build & ship
+
+Scaffold, run locally, then build → deploy → promote. Deploys go through the Deploy Ledger (approve/watch), so a plan is not proof — verify health and logs.
+
+```bash
+khal new app|service|workflow   # scaffold a new pack
+khal start                      # run the local dev loop
+khal build                      # build the app/service image (commit-addressed tags)
+khal deploy                     # deploy to a target (Deploy Ledger: approve/resume/watch)
+khal install <source>           # install a pack from its git source
+khal promote                    # promote verified source across release gates
+khal lifecycle plan             # plan install/deploy/verify/rollback/uninstall
+khal route / khal router        # reconcile routes/ingress/DNS · router ops (read-only)
+khal link / khal pull           # link this repo to an app · pull its settings/env schema
+```
+
+<Accordion title="🤖 Copy this → send to your agent">
+```text
+TASK: Build and ship this pack with khal. I'm reading fde-engineer/khal-cli.mdx. Check `khal <cmd> --help` first; deploys use the Deploy Ledger.
+DO: `khal build`, then `khal deploy` to the intended target; use `khal deploy watch` and `khal lifecycle plan` for the full picture. Dry-run/plan before any HML or prod deploy.
+SAFE: never deploy to production or mutate a customer/HML target without my explicit GO. A plan or manifest is not runtime proof.
+EVIDENCE: return the command, exit status, sanitized output, the deployed version + URL, health/logs proof, and the next safe action.
+```
+</Accordion>
+
+## Ops & introspection
+
+See what's running, read logs and telemetry, and diagnose the environment.
+
+```bash
+khal list                # installed apps, services, workflows
+khal logs <app>          # tail logs from a running pack
+khal telemetry cost|perf|logs   # cost per pack · p50/p95/p99 latency · structured log search
+khal infra               # clusters, events, infrastructure introspection
+khal context             # CLI, target, auth, repo, and reachability at a glance
+khal doctor              # diagnose dev/HML target prerequisites
+khal config / khal target       # view/edit CLI config · manage target profiles
+khal dev                 # developer-loop tools (qa, design-system, manifest)
+```
+
+<Accordion title="🤖 Copy this → send to your agent">
+```text
+TASK: Tell me the state of my khal environment and packs. I'm reading fde-engineer/khal-cli.mdx. Prefer read-only; check `khal <cmd> --help` first.
+DO: `khal context` and `khal doctor` for the environment; `khal list` + `khal logs <app>` + `khal telemetry perf` for a running pack.
+SAFE: read-only only. Redact secrets and private URLs in anything you show me.
+EVIDENCE: return the command, exit status, sanitized output, what it proves, and the next safe action.
+```
+</Accordion>
+
+## Maintenance
+
+```bash
+khal update              # update the khal CLI from the KHAL-owned app-kit endpoint
+```
+
+<Accordion title="🤖 Copy this → send to your agent">
+```text
+TASK: Keep my khal CLI current. I'm reading fde-engineer/khal-cli.mdx.
+DO: `khal update`, then `khal --version` and `khal doctor` to confirm the new build is healthy.
+SAFE: read-only after updating; report if anything regressed.
+EVIDENCE: return the command, exit status, the new version, and doctor result.
+```
+</Accordion>

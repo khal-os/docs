@@ -79,6 +79,7 @@
                 "group": "CLI & identity",
                 "pages": [
                   "dev/fde-cli-quickstart",
+                  "fde-engineer/khal-cli",
                   "dev/fde-environment-ladder",
                   "dev/gitea-source-control"
                 ]
