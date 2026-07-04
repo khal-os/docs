@@ -1,42 +1,42 @@
 ---
 title: "Access troubleshooting"
-description: "Fast answers for the most common Access blockers — single-use codes, approval waits, and which --target to use."
+description: "Fast answers for the most common Access blockers."
 ---
 
-Quick answers for the handful of things that trip up most new FDEs during [Access](/fde-start-here/access/overview). For anything else, see the general [Troubleshooting](/reference/troubleshooting) page.
+The handful of things that trip up new FDEs during [Access](/fde-start-here/access/overview). For anything else, see the general [Troubleshooting](/reference/troubleshooting) page.
 
 <AccordionGroup>
   <Accordion title="My invite code says it's already used" icon="ticket">
-    Invite codes are single-use by design — the first successful `khal fde enroll` consumes it permanently. If you're seeing this and you're sure this is your first attempt, you may have already enrolled — check with `khal fde status` before assuming otherwise. If you really haven't enrolled yet, ask your admin to mint a fresh one; there's no way to "unconsume" the old one.
+    Invite codes are single-use — the first successful `khal fde enroll` consumes it. If you're sure this is your first try, you may already be enrolled: check `khal fde status`. Otherwise, ask your admin to mint a fresh one — there's no "unconsume."
   </Accordion>
 
   <Accordion title="`khal fde ssh` says I'm not approved yet" icon="lock">
-    This is expected, not an error. Every workstation's SSH lease is gated by the Deploy Ledger until a lead or admin approves it — the workstation existing and the workstation being reachable are two different steps. Ping whoever is onboarding you and point them at [Mint an invite and approve access](/fde-start-here/access/admin-guide). While you wait, `khal fde status` and `khal fde ssh --dry-run` both work and mutate nothing.
+    Expected, not an error. The SSH lease is gated by the Deploy Ledger until a lead approves it — the workstation *existing* and being *reachable* are separate steps. Ping whoever's onboarding you ([admin guide](/fde-start-here/access/admin-guide)). While you wait, `khal fde status` and `khal fde ssh --dry-run` both work and mutate nothing.
   </Accordion>
 
   <Accordion title="Which --target do I use?" icon="bullseye">
-    `--target` is an environment label, not a URL — `dev`, `hml`, or `prod`. Almost every new FDE should use `--target dev` when they enroll. `hml`/`prod` targets belong to specific customer engagements and come from your onboarding lead, not a guess. See the [environment ladder](/fde-start-here/environments) for what each rung means.
+    An environment label, not a URL — `dev`, `hml`, or `prod`. New FDEs use `--target dev`. `hml`/`prod` belong to specific customer engagements and come from your lead. See the [environment ladder](/fde-start-here/environments).
   </Accordion>
 
   <Accordion title="Minting an invite fails or says access denied" icon="ban">
-    `khal fde invite create` is superadmin-only, and only accepts `@namastex.ai` addresses. If you're not a superadmin, you can't mint one — ask a superadmin to do it for you. If the email isn't `@namastex.ai`, that's also a hard no; there's no workaround.
+    `khal fde invite create` is superadmin-only and only accepts `@namastex.ai` addresses. Not a superadmin? Ask one to mint it. Non-`@namastex.ai` email? Also a hard no — no workaround.
   </Accordion>
 
   <Accordion title="I don't know where I am in the process" icon="map">
     ```bash
     khal fde status
     ```
-    Run it any time, from mint through connect — it shows your current state and never mutates anything.
+    Run it any time, from mint through connect — it shows your current state and never mutates.
   </Accordion>
 </AccordionGroup>
 
 <Accordion title="🤖 Agent paste prompt">
 
 ```text
-TASK: Use the Khal OS docs page `fde-start-here/access/troubleshooting.mdx` (Access troubleshooting) to unblock an FDE or admin stuck partway through Access, verifying with current command output before assuming a fix.
-CONTEXT: You are helping someone stuck on invite redemption, instance requests, or SSH approval. Read this page and the specific guide it points back to (admin or engineer) before recommending a fix.
-SAFE FIRST COMMANDS: `khal fde status`, `khal fde ssh --dry-run`, `khal --version`. None of these mutate.
-EVIDENCE: Return command, exit status, sanitized output (redact invite codes and hostnames), what it proves, and the next safe action. Never suggest re-running a mutating command (enroll, instance, invite create) speculatively "to see what happens."
+TASK: Use `fde-start-here/access/troubleshooting.mdx` to unblock an FDE or admin stuck partway through Access, verifying with current command output before assuming a fix.
+CONTEXT: Read this page and the specific guide it points back to (admin or engineer) before recommending a fix.
+SAFE FIRST COMMANDS: `khal fde status`, `khal fde ssh --dry-run`, `khal --version` (none mutate).
+EVIDENCE: command, exit status, sanitized output (redact invite codes and hostnames), what it proves, next safe action. Never re-run a mutating command (enroll, instance, invite create) speculatively.
 ```
 
 </Accordion>
