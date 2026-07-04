@@ -32,3 +32,18 @@ For local preview and validation, run `mint dev` and `mint broken-links` from th
 - **Lead with the goal**: Start instructions with what the user wants to accomplish
 - **Use consistent terminology**: Don't alternate between synonyms for the same concept
 - **Include examples**: Show, don't just tell
+
+---
+
+## The docs contract (v1)
+
+khal docs is deliberately small — a v1 covering the onboarding + `khal` CLI core. Archived pages live in `_archive/` and come back one at a time. Keep it small:
+
+- **One page per PR**, reviewed by one human.
+- **EN + pt-BR always in sync** — every page ships in both languages (EN at `<path>`, pt-BR at `pt-BR/<path>`), never one without the other.
+- **One thing per page.** No repeated facts — state once, link elsewhere (a reference references; a guide narrates).
+- **Keep the `🤖 copy → send to your agent` blocks** on any page an agent would act on.
+- **Write for humans** — minimal prose; `khal <cmd> --help` is the local truth, docs are the map.
+- **Grow from `_archive/`** — bring a page back only when needed, tightened.
+
+**No bloat.**
