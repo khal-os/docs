@@ -3,26 +3,15 @@ title: "khal CLI reference for FDEs"
 description: "The whole khal command set, grouped by intent — a human map for FDE engineers and their agents."
 ---
 
-`khal` is your one CLI for onboarding, building, shipping, and operating KhalOS packs. This page groups every command by intent so you — or your agent — find the right one fast. Copy the agent block under any family and hand the work to your agent.
+`khal` is your one CLI for building, shipping, and operating KhalOS packs. Install it with `curl -fsSL https://install.khal.ai/app-kit | sh`. This page is the **command map**, grouped by intent — copy the agent block under any family and hand the work to your agent.
 
 <Callout type="info">
-  This page is a human map. `khal <command> --help` on your machine is the final local truth — always check it when a flag matters.
+  New to khal? Do the guided onboarding first — [Enroll, request a workstation, connect](/fde-start-here/access/engineer-guide). This page is your command map after that. `khal <command> --help` on your machine is always the final local truth.
 </Callout>
-
-**New here? One command.** `khal fde join` logs you in, enrolls your machine, and mints your instance — then everything below just works.
-
-<Accordion title="🤖 Copy this → send to your agent — onboard me">
-```text
-TASK: Onboard me to khal from scratch. I'm reading fde-engineer/khal-cli.mdx. Run `khal fde join --help` first, then walk me through it.
-DO: `khal fde join` (login + enroll + instance mint). If it needs an invite/enrollment code, tell me exactly what to paste. After it finishes, confirm with `khal whoami` + `khal context`.
-SAFE: stop and ask me before anything destructive; this is first-time setup, so surface each prompt.
-EVIDENCE: return the command, exit status, sanitized output, my resolved identity + instance, and the next safe action.
-```
-</Accordion>
 
 ## Onboarding & identity
 
-One command wires you up: `khal fde join` (login + enroll + instance mint). The rest manage identity, source access, and permissions.
+Manage identity, source access, and permissions. (For the first-time flow, see the [engineer guide](/fde-start-here/access/engineer-guide).)
 
 ```bash
 khal fde join            # one-command onboarding: login + enroll + instance mint

@@ -32,197 +32,16 @@
         "language": "en",
         "tabs": [
           {
-            "tab": "START HERE",
+            "tab": "Start with khal",
             "groups": [
               {
-                "group": "Day 0 path",
-                "pages": [
-                  "index",
-                  "fde-start-here/day-zero-walkthrough",
-                  "fde-start-here/install-toolchain"
-                ]
-              },
-              {
-                "group": "Access",
+                "group": "Onboarding & access",
                 "pages": [
                   "fde-start-here/access/overview",
-                  "fde-start-here/access/admin-guide",
                   "fde-start-here/access/engineer-guide",
-                  "fde-start-here/access/troubleshooting"
-                ]
-              },
-              {
-                "group": "Environments",
-                "pages": [
-                  "fde-start-here/environments"
-                ]
-              },
-              {
-                "group": "First useful work",
-                "pages": [
-                  "getting-started/your-first-pack",
-                  "dev/fde-cli-quickstart"
-                ]
-              },
-              {
-                "group": "Platform overview",
-                "pages": [
-                  "what-is-khal-os"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "FDE Engineer",
-            "groups": [
-              {
-                "group": "CLI & identity",
-                "pages": [
-                  "dev/fde-cli-quickstart",
                   "fde-engineer/khal-cli",
-                  "dev/fde-environment-ladder",
-                  "dev/gitea-source-control"
-                ]
-              },
-              {
-                "group": "Dev, test, release",
-                "pages": [
-                  "dev/local-dev-and-testing",
-                  "release/publish-your-pack",
-                  "release/customer-install"
-                ]
-              },
-              {
-                "group": "Working with your agent",
-                "pages": [
-                  "fde-engineer/agent-companion"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "KHAW",
-            "groups": [
-              {
-                "group": "KHAW harness",
-                "pages": [
-                  "khaw/what-is-khaw",
-                  "khaw/agent-quickstart",
-                  "khaw/agent-evidence",
-                  "khaw/profile-configuration"
-                ]
-              },
-              {
-                "group": "Commands & credentials",
-                "pages": [
-                  "khaw/cli-reference",
-                  "khaw/slash-commands",
-                  "khaw/wish",
-                  "khaw/openrouter-creds"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "KHORTEX",
-            "groups": [
-              {
-                "group": "Reasoning & context",
-                "pages": [
-                  "khaw/khortex",
-                  "khortex/context-queries",
-                  "khortex/council-pattern"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Pack Development",
-            "groups": [
-              {
-                "group": "Fundamentals",
-                "pages": [
-                  "packs/anatomy-of-a-pack",
-                  "packs/khal-app-json"
-                ]
-              },
-              {
-                "group": "SDK",
-                "pages": [
-                  "sdk/hooks-reference",
-                  "sdk/useNats",
-                  "sdk/useKhalAuth",
-                  "sdk/useService"
-                ]
-              },
-              {
-                "group": "Services & patterns",
-                "pages": [
-                  "services/backend-overview",
-                  "services/environment-config",
-                  "patterns/frontend-only-pack",
-                  "patterns/full-stack-pack"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Visual Proof",
-            "groups": [
-              {
-                "group": "Screenshots & terminals",
-                "pages": [
-                  "visuals/desktop-tour",
-                  "visuals/terminal-gallery",
-                  "visuals/pack-gallery"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Reference",
-            "groups": [
-              {
-                "group": "Quick reference",
-                "pages": [
-                  "reference/glossary",
-                  "reference/cheat-sheet",
-                  "reference/troubleshooting"
-                ]
-              },
-              {
-                "group": "Manifest",
-                "pages": [
-                  "reference/khal-app-json-schema"
-                ]
-              },
-              {
-                "group": "Examples",
-                "pages": [
-                  "reference/example-packs"
-                ]
-              },
-              {
-                "group": "Legacy quickstarts",
-                "pages": [
-                  "getting-started/clone-workspace",
-                  "getting-started/install-dependencies"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Brain",
-            "groups": [
-              {
-                "group": "@khal-os/brain",
-                "pages": [
-                  "brain/overview",
-                  "brain/quickstart",
-                  "brain/auto-kb",
-                  "brain/knowledge-graph",
-                  "brain/search",
-                  "brain/configuration"
+                  "fde-start-here/access/admin-guide",
+                  "fde-start-here/access/troubleshooting"
                 ]
               }
             ]
@@ -233,14 +52,15 @@
         "language": "pt-BR",
         "tabs": [
           {
-            "tab": "COMECE AQUI",
+            "tab": "Comece com o khal",
             "groups": [
               {
-                "group": "Acesso",
+                "group": "Onboarding e acesso",
                 "pages": [
                   "pt-BR/fde-start-here/access/overview",
-                  "pt-BR/fde-start-here/access/admin-guide",
                   "pt-BR/fde-start-here/access/engineer-guide",
+                  "pt-BR/fde-engineer/khal-cli",
+                  "pt-BR/fde-start-here/access/admin-guide",
                   "pt-BR/fde-start-here/access/troubleshooting"
                 ]
               }
